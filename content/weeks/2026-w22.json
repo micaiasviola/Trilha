@@ -1,0 +1,29 @@
+{
+  "slug": "2026-w22",
+  "weekNumber": 22,
+  "startDate": "2026-05-25",
+  "endDate": "2026-05-31",
+  "title": "Fundando o modelo de dados do ERP",
+  "summary": "Semana de modelagem: defini o esquema central do ERP de Obras e como isolar dados por obra com segurança.",
+  "projects": ["erp-obras"],
+  "technologies": ["Supabase", "PostgreSQL", "TypeScript"],
+  "deliveries": [
+    "Esquema inicial das tabelas de obra, orçamento e medição",
+    "Políticas de Row Level Security por obra"
+  ],
+  "decisions": [
+    {
+      "title": "Usar RLS do Postgres em vez de filtrar no app",
+      "rationale": "Garante isolamento de dados na camada do banco, evitando vazamento entre obras mesmo se houver bug na aplicação. Trade-off: políticas mais difíceis de testar, então criei seeds dedicados."
+    }
+  ],
+  "challenges": [
+    {
+      "title": "Modelar medições versionadas",
+      "howSolved": "Adotei tabela de medições append-only com referência à versão anterior, preservando histórico para auditoria."
+    }
+  ],
+  "learning": "RLS bem desenhado simplifica o código do app e centraliza as regras de acesso.",
+  "notes": "Conteúdo de exemplo — substituir pelos dados reais.",
+  "placeholder": true
+}

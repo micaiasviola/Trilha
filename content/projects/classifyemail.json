@@ -1,0 +1,16 @@
+{
+  "slug": "classifyemail",
+  "name": "ClassifyEmail",
+  "tagline": "Classificador de e-mails com IA para triagem automática.",
+  "description": "Serviço que classifica e prioriza e-mails recebidos usando IA, reduzindo o tempo de triagem manual da equipe. Pensado para integrar com os fluxos internos da ECQUA.",
+  "status": "shipped",
+  "role": "Full-Stack Dev",
+  "startDate": "2026-02-10",
+  "technologies": ["Python", "FastAPI", "Docker"],
+  "highlights": [
+    "Pipeline de pré-processamento e classificação",
+    "API em FastAPI containerizada",
+    "Métricas de precisão por categoria"
+  ],
+  "placeholder": true
+}

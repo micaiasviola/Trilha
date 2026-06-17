@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-ink antialiased;
+  }
+  ::selection {
+    @apply bg-accent/30 text-ink;
+  }
+}
+
+/* Máscaras do word-mask reveal (TREINO-ANIMACOES §3) */
+.w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  line-height: inherit;
+}
+.wi {
+  display: inline-block;
+}
+.ws {
+  display: inline;
+}
+
+@layer utilities {
+  .bg-grid {
+    background-image: radial-gradient(
+      rgba(52, 211, 153, 0.08) 1px,
+      transparent 1px
+    );
+    background-size: 28px 28px;
+  }
+}
+
+/* ── Atrações: troca carrossel (default/mobile/reduced) ↔ pinned (GSAP) ── */
+[data-attractions] .at-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+[data-attractions] .at-track::-webkit-scrollbar {
+  display: none;
+}
+/* Modo pinned (ativado por JS só em desktop + motion permitido) */
+[data-attractions][data-mode="pinned"] {
+  height: 100vh;
+  overflow: hidden;
+}
+[data-attractions][data-mode="pinned"] .at-track {
+  overflow: visible;
+  scroll-snap-type: none;
+  height: 100%;
+  align-items: center;
+  will-change: transform;
+}
+/* A trilha só aparece no modo pinned */
+[data-attractions] .at-rail {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+[data-attractions][data-mode="pinned"] .at-rail {
+  opacity: 1;
+}
+
+/* Scrollbar fina para painéis com scroll interno */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: #1e2733 transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: #1e2733;
+  border-radius: 999px;
+}
+.scroll-slim::-webkit-scrollbar-thumb:hover {
+  background: #2a3645;
+}
+
+/* Float sutil para o número-fantasma da atração */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5rem);
+  }
+}
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+/* ── Cursor personalizado (TREINO-CURSOR) ── */
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  display: none;
+}
+html.has-fine-pointer .cursor {
+  display: block;
+}
+.cursor-dot {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+}
+.cursor-ring {
+  position: absolute;
+  top: -18px;
+  left: -18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.2px solid rgba(255, 255, 255, 0.85);
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.4, 0.44, 1),
+    opacity 0.3s ease;
+}
+.cursor.is-active .cursor-ring {
+  transform: scale(1.9);
+}
+.cursor.is-active .cursor-dot {
+  opacity: 0;
+}
+.cursor.is-pressed .cursor-ring {
+  transform: scale(0.8);
+}
+/* Esconde o cursor nativo SÓ com JS ativo E ponteiro fino → failsafe */
+html.js.has-fine-pointer,
+html.js.has-fine-pointer a,
+html.js.has-fine-pointer button,
+html.js.has-fine-pointer input,
+html.js.has-fine-pointer textarea,
+html.js.has-fine-pointer select,
+html.js.has-fine-pointer [data-cursor-hot] {
+  cursor: none;
+}
+
+/* ── Odômetro (TREINO-SECOES §3) ── */
+.od {
+  display: inline-flex;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+.od-col {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+}
+.od-stack {
+  display: block;
+  will-change: transform;
+}
+.od-stack b {
+  display: block;
+  height: 1em;
+  font-weight: inherit;
+}
+.od-sep {
+  display: inline-block;
+}
+
+/* will-change só onde anima de fato (TREINO-PERFORMANCE §3) */
+.wi {
+  will-change: transform;
+}
+
+/* Sem JS, o preloader não pode prender a página */
+html.no-js [data-preloader] {
+  display: none;
+}
+
+/* ── prefers-reduced-motion: dupla defesa no CSS (TREINO-PERFORMANCE §12) ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001s !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-float {
+    animation: none;
+  }
+  .cursor,
+  [data-preloader] {
+    display: none !important;
+  }
+}
