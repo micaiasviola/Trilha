@@ -2,15 +2,48 @@
   "slug": "helpbox-prototype",
   "name": "HelpBox",
   "tagline": "Helpdesk de ciclo completo — da abertura do chamado à resolução com histórico.",
-  "description": "Protótipo de sistema de helpdesk desenvolvido em equipe durante a faculdade. O objetivo principal era praticar desenvolvimento colaborativo real: branches por feature, pull requests com code review e integração contínua. O sistema cobre o ciclo completo de um chamado — abertura pelo usuário, triagem, atribuição a um técnico e resolução com comentários de acompanhamento. Cada decisão de arquitetura foi discutida em equipe, o que trouxe perspectiva sobre como escalar um produto de suporte para uso interno real.",
+  "description": "Protótipo de sistema de helpdesk desenvolvido em equipe durante a faculdade. O objetivo central era praticar desenvolvimento colaborativo real: branches por feature, pull requests com code review e integração contínua.",
   "status": "shipped",
   "role": "Full-Stack Dev",
+  "order": 5,
   "startDate": "2025-10-01",
+  "endDate": "2025-12-15",
   "technologies": ["JavaScript", "Node.js", "HTML", "CSS"],
   "highlights": [
     "Ciclo de vida completo do chamado: abertura → triagem → atribuição → resolução com comentários",
     "Autenticação com perfis distintos para usuário final e técnico de suporte",
     "Desenvolvimento colaborativo com branches por feature, PRs e code review em equipe"
   ],
+  "accentColor": "#64748b",
+  "story": {
+    "context": "Projeto de faculdade com objetivo central de praticar desenvolvimento colaborativo real: não apenas codificar, mas trabalhar com branches por feature, pull requests e code review em equipe. O HelpBox nasceu desse contexto — um sistema de helpdesk funcional que cobria o ciclo completo de um chamado.",
+    "decisions": [
+      {
+        "title": "Ciclo completo de chamado com perfis distintos",
+        "rationale": "Um helpdesk simples só com abertura e fechamento não exercitaria workflows reais. Incluí perfis de usuário final e técnico com permissões distintas — obrigou a equipe a pensar em autenticação e controle de acesso desde o início."
+      },
+      {
+        "title": "Branches por feature com obrigatoriedade de PR",
+        "rationale": "O objetivo secundário era praticar Git colaborativo. Ninguém commita direto na main — toda feature passa por uma branch e um PR com code review. Isso forçou discussões técnicas que raramente acontecem em projetos solo."
+      }
+    ],
+    "challenges": [
+      {
+        "title": "Coordenar conflitos de merge em equipe iniciante",
+        "howSolved": "Estabelecemos convenções de nomenclatura de branch e divisão de módulos por responsável. Com módulos bem delimitados, as chances de conflito caíram drasticamente."
+      },
+      {
+        "title": "Modelar os estados do chamado sem ambiguidade",
+        "howSolved": "Mapeamos os estados em um diagrama antes de codificar — aberto, em triagem, atribuído, em resolução, fechado. Com o fluxo visual claro, a implementação foi direta."
+      }
+    ],
+    "deliveries": [
+      "Sistema de helpdesk com ciclo completo: abertura, triagem, atribuição e resolução",
+      "Autenticação com dois perfis — usuário final e técnico de suporte",
+      "Histórico de comentários por chamado",
+      "Fluxo de desenvolvimento colaborativo com PRs e code review em equipe"
+    ],
+    "learning": "Code review em equipe é onde o aprendizado técnico real acontece — não é overhead, é o processo de aprender a pensar junto. O projeto ficou melhor em cada iteração de review."
+  },
   "githubRepo": "helpbox-prototype"
 }

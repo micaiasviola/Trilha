@@ -2,15 +2,56 @@
   "slug": "app-vistoria-ecqua",
   "name": "App Vistoria ECQUA",
   "tagline": "Vistorias prediais em campo — formulário padronizado e upload seguro direto da câmera.",
-  "description": "Aplicativo mobile para os engenheiros da ECQUA registrarem vistorias prediais em campo. Antes, o fluxo era papel ou fotos avulsas no WhatsApp — sem padrão, sem rastreabilidade. O app padroniza o formulário de inspeção por tipo de edificação, captura fotos diretamente e envia tudo via proxy no Google Cloud Run que gera presigned URLs para o bucket de armazenamento. As credenciais nunca chegam ao app. O CI/CD via GitHub Actions elimina o deploy manual: push na main dispara a atualização automática no Cloud Run.",
+  "description": "Aplicativo mobile para os engenheiros da ECQUA registrarem vistorias prediais em campo. Antes, o fluxo era papel ou fotos avulsas no WhatsApp — sem padrão, sem rastreabilidade. O app padroniza o formulário de inspeção por tipo de edificação, captura fotos e envia via proxy seguro no Cloud Run.",
   "status": "in-progress",
   "role": "Full-Stack Dev",
+  "order": 3,
   "startDate": "2026-02-06",
+  "endDate": null,
   "technologies": ["JavaScript", "React Native", "Supabase", "Google Cloud Run", "Python"],
   "highlights": [
     "Proxy de upload seguro: o app recebe apenas a URL assinada, nunca toca nas credenciais do bucket",
     "Formulário padronizado por tipo de edificação — reduz erros de preenchimento em campo",
     "CI/CD via GitHub Actions: push na main dispara deploy automático no Cloud Run sem intervenção"
+  ],
+  "accentColor": "#059669",
+  "story": {
+    "context": "Antes do app, o fluxo de vistoria predial na ECQUA era papel ou fotos avulsas no WhatsApp — sem padrão, sem rastreabilidade, sem histórico. Engenheiros em campo não tinham como submeter laudos estruturados. O app padroniza o formulário por tipo de edificação e centraliza tudo com upload seguro.",
+    "decisions": [
+      {
+        "title": "Proxy de upload no Cloud Run em vez de credenciais no app",
+        "rationale": "Embutir credenciais do bucket direto no app mobile é um risco inaceitável — qualquer extração de APK exporia as chaves. O proxy no Cloud Run valida a identidade e devolve apenas uma URL assinada com tempo de expiração."
+      },
+      {
+        "title": "React Native para reutilizar o stack JavaScript",
+        "rationale": "A equipe de desenvolvimento é mínima. Manter apps nativos iOS + Android separados dobraria o custo de manutenção. React Native permite compartilhar lógica e manter um único codebase para ambas as plataformas."
+      },
+      {
+        "title": "CI/CD via GitHub Actions para Cloud Run",
+        "rationale": "Deploy manual de containers é propenso a erro e cria dependência de um único indivíduo. O pipeline automático garante que qualquer push na main está em produção em minutos, sem intervenção humana."
+      }
+    ],
+    "challenges": [
+      {
+        "title": "Captura de fotos com qualidade controlada em campo",
+        "howSolved": "Configurei compressão no cliente antes do upload — a foto é redimensionada para um tamanho máximo definido por tipo de vistoria. Isso reduz o upload em 60-80% sem perda visual relevante para laudos."
+      },
+      {
+        "title": "Formulário variável por tipo de edificação",
+        "howSolved": "Schema de formulário dinâmico em JSON por tipo de edificação. O app renderiza os campos em runtime a partir do schema — adicionar um novo tipo não exige código novo."
+      }
+    ],
+    "deliveries": [
+      "App React Native com formulário dinâmico por tipo de edificação",
+      "Proxy de upload seguro no Google Cloud Run com URLs assinadas",
+      "CI/CD via GitHub Actions — deploy automático no Cloud Run ao push na main",
+      "Compressão de imagens no cliente antes do upload para redução de consumo de dados"
+    ],
+    "learning": "Nunca colocar credenciais no cliente. O proxy de upload é o padrão correto para qualquer app que precise fazer upload para storage em nuvem — o custo de implementar é baixo, o de não implementar pode ser catastrófico."
+  },
+  "milestones": [
+    { "date": "2026-02-06", "title": "Início — setup do projeto React Native e proxy Cloud Run" },
+    { "date": "2026-04-01", "title": "Primeiro formulário de vistoria funcional em campo" }
   ],
   "githubRepo": "AppVistoriaEcqua"
 }

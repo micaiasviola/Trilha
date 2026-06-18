@@ -2,15 +2,57 @@
   "slug": "erp-obras",
   "name": "ERP de Obras",
   "tagline": "Do caos das planilhas ao controle total de obras — orçamento, medições e histórico em um fluxo único.",
-  "description": "Construo internamente na ECQUA um ERP para gestão de obras de engenharia civil. O problema era real: cada obra vivia em planilhas isoladas sem padrão, tornando impossível consolidar orçamentos, acompanhar medições e auditar pagamentos em escala. O ERP centraliza tudo — cadastro de obra, importação de orçamentos por planilha, medições versionadas com append-only e dashboard de pendências. Escolhi Google Apps Script e Google Sheets como plataforma porque é o ambiente já adotado pela ECQUA, eliminando a curva de aprendizado da equipe.",
+  "description": "Construo internamente na ECQUA um ERP para gestão de obras de engenharia civil. O problema era real: cada obra vivia em planilhas isoladas sem padrão, tornando impossível consolidar orçamentos, acompanhar medições e auditar pagamentos em escala. O ERP centraliza tudo — cadastro de obra, importação de orçamentos por planilha, medições versionadas com append-only e dashboard de pendências.",
   "status": "in-progress",
   "role": "Tech PM & Full-Stack Dev",
+  "order": 1,
   "startDate": "2026-01-06",
+  "endDate": null,
   "technologies": ["JavaScript", "Google Apps Script", "Google Sheets", "HTML", "CSS"],
   "highlights": [
     "Agentes de IA (GitHub Copilot) para automação de lançamentos repetitivos no fluxo de obras",
     "Controle de pagamentos a prestadores com validação por aba e bloqueio de duplicidade",
     "Dashboard de pendências com atualização integrada ao menu — sem reload de página"
+  ],
+  "accentColor": "#3c72c6",
+  "story": {
+    "context": "Cada obra na ECQUA vivia em planilhas isoladas sem padrão nenhum. Consolidar orçamentos, acompanhar medições e auditar pagamentos em escala era impossível. Escolhi Google Apps Script e Google Sheets como plataforma porque é o ambiente já adotado pela equipe — eliminando a curva de aprendizado e garantindo adoção imediata.",
+    "decisions": [
+      {
+        "title": "Google Apps Script em vez de sistema web externo",
+        "rationale": "A equipe já vive no Google Workspace. Construir fora criaria resistência e exigiria treinamento. O GAS roda dentro da planilha que os engenheiros já abrem todo dia — adoção zero-friction."
+      },
+      {
+        "title": "Medições com append-only (sem edição destrutiva)",
+        "rationale": "Permitir edição direta de medições anteriores apagaria o histórico de auditoria. Com append-only, cada medição é um registro novo com referência à versão anterior — rastreabilidade total para prestações de contas."
+      },
+      {
+        "title": "Pré-visualização obrigatória antes de importar planilhas",
+        "rationale": "Importação direta arriscava sujar a base com dados inconsistentes de planilhas legadas. Um passo de preview permite ao usuário confirmar o diff antes de qualquer gravação — confiança no processo de migração."
+      }
+    ],
+    "challenges": [
+      {
+        "title": "Planilhas legadas com formatos inconsistentes",
+        "howSolved": "Criei um normalizador com regras por coluna e um relatório das linhas rejeitadas para correção manual. A migração virou um processo explícito, não uma aposta."
+      },
+      {
+        "title": "Dashboard de pendências sem reload de página",
+        "howSolved": "Integrei o painel de pendências diretamente ao menu do Apps Script, usando cache de resultados por script para evitar recálculo a cada abertura."
+      }
+    ],
+    "deliveries": [
+      "Cadastro centralizado de obras com importação de orçamentos via planilha (.xlsx)",
+      "Sistema de medições append-only com histórico versionado por obra",
+      "Tela de pré-visualização e validação antes de gravar importações",
+      "Dashboard de pendências integrado ao menu — sem reload de página",
+      "Controle de pagamentos a prestadores com validação por aba e bloqueio de duplicidade"
+    ],
+    "learning": "A melhor tecnologia para um produto interno é aquela que a equipe já usa. Migração de dados é 80% validação e feedback ao usuário, 20% gravação."
+  },
+  "milestones": [
+    { "date": "2026-01-06", "title": "Início do projeto — primeiro módulo de cadastro de obras" },
+    { "date": "2026-03-15", "title": "Sistema de medições append-only em produção" }
   ],
   "githubRepo": "PLANILHA-OBRAS-GERAL"
 }

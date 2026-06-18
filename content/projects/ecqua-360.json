@@ -2,15 +2,56 @@
   "slug": "ecqua-360",
   "name": "ECQUA 360",
   "tagline": "CRM comercial com Kanban de leads e versionamento contínuo de propostas comerciais.",
-  "description": "Sistema comercial interno que desenvolvo para a ECQUA gerenciar o funil de vendas de ponta a ponta. Antes, leads se perdiam no e-mail e propostas não tinham histórico de versão. A solução foi um Kanban com atualização de status idempotente via PLpgSQL — arrastar um card não duplica estado. Cada proposta gera uma nova versão rastreável automaticamente. O front é Next.js com Supabase como backend, usando RLS para isolamento por usuário e preloader com skeleton screens para uma UX percebida como mais rápida mesmo em conexões lentas.",
+  "description": "Sistema comercial interno que desenvolvo para a ECQUA gerenciar o funil de vendas de ponta a ponta. Antes, leads se perdiam no e-mail e propostas não tinham histórico de versão. A solução foi um Kanban com atualização de status idempotente via PLpgSQL — arrastar um card não duplica estado.",
   "status": "in-progress",
   "role": "Tech PM & Full-Stack Dev",
+  "order": 2,
   "startDate": "2026-05-27",
+  "endDate": null,
   "technologies": ["Next.js", "TypeScript", "Supabase", "PostgreSQL", "Tailwind CSS"],
   "highlights": [
     "Kanban de leads com drag-and-drop e atualização idempotente via PLpgSQL — sem estado duplicado",
     "Versionamento contínuo de propostas: cada mudança gera uma nova versão rastreável no banco",
     "Preloader + skeleton screens — UX percebida como rápida mesmo em conexões lentas"
+  ],
+  "accentColor": "#7c3aed",
+  "story": {
+    "context": "Leads se perdiam no e-mail e propostas não tinham histórico de versão. A ECQUA precisava de um CRM que coubesse no fluxo da equipe — não de mais uma ferramenta SaaS para aprender. Construí um Kanban interno com Supabase como backend, isolando dados por usuário via RLS.",
+    "decisions": [
+      {
+        "title": "PLpgSQL idempotente para arrastar cards no Kanban",
+        "rationale": "Arrastar um card e atualizar status via chamada REST simples criava condições de corrida: dois drops rápidos podiam duplicar o estado. Movi a lógica para uma função PLpgSQL atômica — a operação de mover um lead é idempotente por design."
+      },
+      {
+        "title": "Versionamento contínuo de propostas no banco",
+        "rationale": "Sobrescrever a proposta apagava o histórico de negociação. Cada mudança agora cria uma nova versão rastreável — o vendedor enxerga a evolução, o gestor audita sem esforço."
+      },
+      {
+        "title": "Skeleton screens em vez de spinner global",
+        "rationale": "Um spinner global congela a percepção de velocidade: o usuário espera e não sabe o que está carregando. Com skeletons, o layout já está lá — apenas o conteúdo preenche. A UX percebida é dramaticamente mais rápida."
+      }
+    ],
+    "challenges": [
+      {
+        "title": "Condições de corrida no Kanban com drag-and-drop rápido",
+        "howSolved": "Função PLpgSQL atômica e idempotente no Supabase: a transição de status só acontece se o card estiver no estado esperado, evitando duplicação mesmo com múltiplos cliques."
+      },
+      {
+        "title": "Manter RLS funcional com propostas versionadas",
+        "howSolved": "Políticas de RLS vinculadas ao user_id do criador da proposta. Versões herdam o isolamento da proposta-pai via foreign key — sem vazamento entre usuários."
+      }
+    ],
+    "deliveries": [
+      "Kanban de leads com drag-and-drop e status idempotente via PLpgSQL",
+      "Versionamento contínuo de propostas comerciais com histórico rastreável",
+      "Autenticação com RLS por usuário — dados isolados no banco",
+      "Preloader + skeleton screens para UX percebida como rápida"
+    ],
+    "learning": "Mover lógica crítica de estado para o banco (PLpgSQL) elimina toda uma classe de bugs de corrida no front. O banco é o único lugar com garantias ACID — use-o."
+  },
+  "milestones": [
+    { "date": "2026-05-27", "title": "Início — modelagem do funil e políticas de RLS" },
+    { "date": "2026-06-10", "title": "Kanban com drag-and-drop em produção" }
   ],
   "githubRepo": "ECQUA-360"
 }

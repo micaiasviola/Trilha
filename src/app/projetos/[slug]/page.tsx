@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import {
-  getAllProjects,
-  getProject,
-  getWeeksForProject,
-} from "@/lib/content";
+import { getAllProjects, getProject } from "@/lib/content";
 import { getProjectCommits } from "@/lib/commits";
 import { ProjectStage } from "@/components/project/ProjectStage";
 import { CommitTimeline } from "@/components/project/CommitTimeline";
@@ -32,24 +28,19 @@ export default async function ProjectPage({
   const project = getProject(slug);
   if (!project) notFound();
 
-  const weeks = getWeeksForProject(slug);
   const commits = project.githubRepo
     ? await getProjectCommits(project.githubRepo, project.startDate)
     : [];
-  const index = getAllProjects().findIndex((p) => p.slug === slug);
+
+  const allProjects = getAllProjects();
+  const index = allProjects.findIndex((p) => p.slug === slug);
 
   const stats = {
-    weeks: weeks.length,
-    deliveries: weeks.reduce((s, w) => s + w.deliveries.length, 0),
-    decisions: weeks.reduce((s, w) => s + w.decisions.length, 0),
+    deliveries: project.story?.deliveries.length ?? 0,
+    decisions: project.story?.decisions.length ?? 0,
+    challenges: project.story?.challenges.length ?? 0,
     technologies: project.technologies.length,
   };
-
-  const stageWeeks = weeks.map((w) => ({
-    slug: w.slug,
-    weekNumber: w.weekNumber,
-    title: w.title,
-  }));
 
   return (
     <div className="lg:grid lg:h-[calc(100svh-4rem)] lg:grid-cols-[7fr_3fr]">
@@ -58,12 +49,7 @@ export default async function ProjectPage({
         data-lenis-prevent
         className="bg-grid relative min-h-0 overflow-hidden lg:overflow-y-auto scroll-slim"
       >
-        <ProjectStage
-          project={project}
-          index={index}
-          stats={stats}
-          weeks={stageWeeks}
-        />
+        <ProjectStage project={project} index={index} stats={stats} />
       </section>
 
       {/* Direita (30%) — feed rolável de commits */}
@@ -74,7 +60,11 @@ export default async function ProjectPage({
       >
         <CommitTimeline
           commits={commits}
-          repo={project.githubRepo ? `micaiasviola/${project.githubRepo}` : `micaiasviola/${slug}`}
+          repo={
+            project.githubRepo
+              ? `micaiasviola/${project.githubRepo}`
+              : `micaiasviola/${slug}`
+          }
           live={!!project.githubRepo}
           technologies={project.technologies}
         />

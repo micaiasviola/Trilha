@@ -25,7 +25,7 @@ export default function ProjectsPage() {
         />
         <Reveal as="p" className="mt-3 max-w-2xl text-ink-muted">
           Cada projeto é uma atração: tem história própria, decisões técnicas,
-          desafios e entregas. Aqui estão os produtos que as semanas constroem.
+          desafios e entregas. Aqui estão os projetos que compõem a trilha.
         </Reveal>
 
         <Reveal stagger={0.1} y={16} className="mt-6 flex flex-wrap gap-6">
