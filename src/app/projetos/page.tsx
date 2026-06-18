@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAllProjects } from "@/lib/content";
+import { getAllProjectsWithGitHub } from "@/lib/content";
 import { ProjectCard } from "@/components/ProjectCard";
 import { SplitWords } from "@/components/anim/SplitWords";
 import { Reveal } from "@/components/anim/Reveal";
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   title: "Projetos — Trilhado Desenvolvimento",
 };
 
-export default function ProjectsPage() {
-  const projects = getAllProjects();
+export default async function ProjectsPage() {
+  const projects = await getAllProjectsWithGitHub();
   const inProgress = projects.filter((p) => p.status === "in-progress");
   const shipped = projects.filter((p) => p.status === "shipped");
 

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useDepthScroll } from '@/lib/depth/useDepthScroll'
-import { StatusBadge, TechBadge } from '@/components/Badge'
+import { prefersReducedMotion } from '@/lib/anim/signal'
+import { TechBadge } from '@/components/Badge'
 import { STATUS_LABEL, formatLong } from '@/lib/format'
 import type { Project } from '@/lib/types'
 import './depthScrollStage.css'
@@ -29,12 +30,12 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
     source: 'capture',
     captureMode: 'always',
     snap: true,
-    snapDelay: 130,
+    snapDelay: 120,
     keyboard: true,
-    smoothing: 0.1, // a bit snappier than the 0.08 default
-    wheelSpeed: 1.3, // more travel per notch — less "wading"
-    touchSpeed: 2,
-    length: projects.length * 700, // shorter depth per layer = more responsive
+    smoothing: 0.12, // settles a touch faster
+    wheelSpeed: 1.8, // faster scroll — more travel per notch
+    touchSpeed: 2.4,
+    length: projects.length * 520, // shorter depth per layer = faster traversal
     layerCount: projects.length,
     onLayerChange: setActive,
   })
@@ -57,6 +58,29 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
     history.replaceState(null, '', url.toString())
   }, [active, projects])
 
+  // Auto-scroll: pause for a bit whenever the user takes over.
+  const lastInteractRef = useRef(0)
+  const dirRef = useRef(1)
+  const markInteract = () => {
+    lastInteractRef.current = performance.now()
+  }
+
+  // Auto-advance through projects when idle — ping-pong, honors reduced motion.
+  useEffect(() => {
+    const count = projects.length
+    if (count < 2 || prefersReducedMotion()) return
+    const id = setInterval(() => {
+      if (performance.now() - lastInteractRef.current < 6000) return // user is driving
+      const e = engine.current
+      if (!e) return
+      const cur = e.activeLayer < 0 ? 0 : e.activeLayer
+      if (cur >= count - 1) dirRef.current = -1
+      else if (cur <= 0) dirRef.current = 1
+      e.goTo(cur + dirRef.current)
+    }, 5000)
+    return () => clearInterval(id)
+  }, [projects.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const current = projects[active]
 
   return (
@@ -66,6 +90,9 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
         ref={ref as React.RefObject<HTMLDivElement>}
         className="depth-stage"
         data-lenis-prevent
+        onWheel={markInteract}
+        onTouchStart={markInteract}
+        onPointerDown={markInteract}
         style={
           {
             '--count': projects.length,
@@ -95,35 +122,76 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
               }}
             />
 
-            {/* Main content — left-aligned, clear of the right nav */}
-            <div className="relative z-10 w-full max-w-xl px-8 lg:px-16">
-              <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/25">
-                {String(i + 1).padStart(2, '0')}&nbsp;/&nbsp;
-                {String(projects.length).padStart(2, '0')}
-              </p>
-
-              <h2 className="mt-4 break-words text-5xl font-bold leading-none tracking-tight text-white sm:text-6xl lg:text-7xl">
-                {project.name}
-              </h2>
-
-              <p className="mt-4 max-w-sm text-base text-white/50 sm:text-lg">
-                {project.tagline}
-              </p>
-
-              <div className="mt-5">
-                <StatusBadge
-                  status={project.status}
-                  label={STATUS_LABEL[project.status] ?? project.status}
-                />
-              </div>
-
-              <Link
-                href={`/projetos/${project.slug}`}
-                tabIndex={i === active ? 0 : -1}
-                className="mt-7 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 py-2.5 text-sm text-white/85 backdrop-blur-sm transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50"
+            {/* Main content — brutalist info card, nudged toward center */}
+            <div className="relative z-10 w-full pl-6 pr-6 sm:pl-10 md:pr-[18rem] lg:pl-[9vw] xl:pl-[13vw]">
+              <article
+                className="w-full max-w-md border-2 bg-[#0b0b12] p-6 sm:p-7"
+                style={{
+                  borderColor: 'rgba(255,255,255,0.9)',
+                  boxShadow: `8px 8px 0 0 ${project.accentColor ?? '#3c72c6'}`,
+                }}
               >
-                Ver história completa →
-              </Link>
+                {/* header strip */}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="bg-white px-2 py-0.5 font-mono text-xs font-bold tracking-[0.2em] text-black">
+                    {String(i + 1).padStart(2, '0')}/{String(projects.length).padStart(2, '0')}
+                  </span>
+                  <BrutalStatus
+                    status={project.status}
+                    label={STATUS_LABEL[project.status] ?? project.status}
+                  />
+                </div>
+
+                {/* name */}
+                <h2 className="mt-5 break-words text-4xl font-extrabold uppercase leading-[0.92] tracking-tight text-white sm:text-5xl">
+                  {project.name}
+                </h2>
+
+                {/* tagline */}
+                <p className="mt-3 text-sm leading-relaxed text-white/55 sm:text-base">
+                  {project.tagline}
+                </p>
+
+                {/* meta */}
+                <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 border-t-2 border-white/15 pt-4 font-mono text-[0.7rem]">
+                  <div>
+                    <dt className="uppercase tracking-wider text-white/35">Papel</dt>
+                    <dd className="mt-1 text-white/80">{project.role}</dd>
+                  </div>
+                  <div>
+                    <dt className="uppercase tracking-wider text-white/35">Período</dt>
+                    <dd className="mt-1 text-white/80">
+                      {formatLong(project.startDate)}
+                      {project.endDate
+                        ? ` → ${formatLong(project.endDate)}`
+                        : ' → presente'}
+                    </dd>
+                  </div>
+                </dl>
+
+                {/* tech chips */}
+                {project.technologies.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {project.technologies.slice(0, 5).map((t) => (
+                      <span
+                        key={t}
+                        className="border border-white/25 px-2 py-0.5 font-mono text-[0.65rem] uppercase tracking-wide text-white/70"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* CTA — solid fill, no backdrop-filter */}
+                <Link
+                  href={`/projetos/${project.slug}`}
+                  tabIndex={i === active ? 0 : -1}
+                  className="mt-7 inline-block border-2 border-white bg-white px-5 py-2 font-mono text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-transparent hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  Ver história →
+                </Link>
+              </article>
             </div>
           </div>
         ))}
@@ -142,7 +210,10 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
                 <li key={p.slug}>
                   <button
                     type="button"
-                    onClick={() => engine.current?.goTo(i)}
+                    onClick={() => {
+                      markInteract()
+                      engine.current?.goTo(i)
+                    }}
                     aria-current={i === active ? 'true' : undefined}
                     className="group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/5"
                   >
@@ -228,5 +299,24 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
         </nav>
       )}
     </>
+  )
+}
+
+// Brutalist status tag — square dot, hard border, mono uppercase.
+function BrutalStatus({ status, label }: { status: string; label: string }) {
+  const color =
+    status === 'in-progress'
+      ? '#22d3ee'
+      : status === 'shipped'
+        ? '#34d399'
+        : '#94a3b8'
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 border-2 px-2 py-0.5 font-mono text-[0.6rem] font-bold uppercase tracking-wider"
+      style={{ borderColor: color, color }}
+    >
+      <span className="h-1.5 w-1.5" style={{ backgroundColor: color }} aria-hidden />
+      {label}
+    </span>
   )
 }

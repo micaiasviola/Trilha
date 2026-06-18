@@ -31,7 +31,7 @@ export interface Project {
   description: string;
   status: ProjectStatus;
   role: string;
-  order: number;
+  order?: number;
   startDate: string;
   endDate?: string | null;
   technologies: string[];
