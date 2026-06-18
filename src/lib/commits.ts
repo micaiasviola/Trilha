@@ -8,7 +8,7 @@ export interface Commit {
   week: number;
 }
 
-const OWNER = "micaiasviola";
+const DEFAULT_OWNER = "micaiasviola";
 const MAX_COMMITS = 60;
 
 function inferType(firstLine: string): CommitType | null {
@@ -42,6 +42,10 @@ export async function getProjectCommits(
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
 
+  const [owner, repo] = githubRepo.includes("/")
+    ? githubRepo.split("/", 2)
+    : [DEFAULT_OWNER, githubRepo];
+
   const commits: Commit[] = [];
   let page = 1;
 
@@ -49,7 +53,7 @@ export async function getProjectCommits(
     let res: Response;
     try {
       res = await fetch(
-        `https://api.github.com/repos/${OWNER}/${githubRepo}/commits?per_page=100&page=${page}`,
+        `https://api.github.com/repos/${owner}/${repo}/commits?per_page=100&page=${page}`,
         { headers, next: { revalidate: 3600 } },
       );
     } catch {
@@ -57,7 +61,7 @@ export async function getProjectCommits(
     }
 
     if (!res.ok) {
-      console.error(`[commits] ${githubRepo} → HTTP ${res.status}`, await res.text());
+      console.error(`[commits] ${owner}/${repo} → HTTP ${res.status}`, await res.text());
       break;
     }
 
