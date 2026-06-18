@@ -166,10 +166,8 @@ html.no-js [data-preloader] {
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  background: rgba(15, 20, 29, 0.72);
+  background: rgba(17, 22, 31, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   /* repouso: recolhido no centro do card, invisível */
   transform: translate(-50%, -50%) scale(0.2);
   opacity: 0;
