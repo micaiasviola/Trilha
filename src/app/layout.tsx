@@ -13,7 +13,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const metadata: Metadata = {
   title: "Trilhado Desenvolvimento — diário técnico de Micaías Viola",
   description:
-    "A história do meu desenvolvimento semana a semana: decisões, tecnologias, desafios e entregas na ECQUA Engenharia.",
+    "A história do que eu construo na ECQUA Engenharia: decisões técnicas, desafios e entregas em cada projeto.",
 };
 
 export default function RootLayout({

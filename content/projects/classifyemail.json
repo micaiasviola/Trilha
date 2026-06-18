@@ -2,15 +2,52 @@
   "slug": "classifyemail",
   "name": "ClassifyEmail",
   "tagline": "Triagem automática de e-mails com IA zero-shot — sem dataset, sem configuração.",
-  "description": "Serviço que classifica e prioriza e-mails automaticamente usando modelos de IA zero-shot. Escolhi zero-shot porque não preciso de dataset de treinamento: o modelo infere a categoria pelo conteúdo do e-mail. O serviço detecta phishing, spam de marketing e e-mails críticos, retornando um score de confiança por categoria. É containerizado com Docker e servido via Gunicorn na Render. O desafio principal foi manter latência aceitável em planos free, resolvido com cache de resultados por hash de mensagem.",
+  "description": "Serviço que classifica e prioriza e-mails automaticamente usando modelos de IA zero-shot. O modelo infere a categoria pelo conteúdo do e-mail — sem dataset de treinamento. Detecta phishing, spam de marketing e e-mails críticos, com score de confiança por categoria.",
   "status": "shipped",
   "role": "Full-Stack Dev",
+  "order": 4,
   "startDate": "2025-08-28",
+  "endDate": "2025-11-15",
   "technologies": ["Python", "FastAPI", "Gunicorn", "Docker", "HTML", "CSS"],
   "highlights": [
     "Classificação zero-shot — sem dataset de treinamento, funciona out-of-the-box com qualquer e-mail",
     "Detecção de phishing e marketing com score de confiança por categoria retornado na resposta",
     "Deploy containerizado na Render via Gunicorn com cold-start abaixo de 3 s"
   ],
+  "accentColor": "#f97316",
+  "story": {
+    "context": "A triagem manual de e-mails corporativos é ruído puro. Queria um serviço que classificasse automaticamente sem precisar construir e etiquetar um dataset — tarefa impossível para um side-project. Zero-shot com modelos pré-treinados resolve: o modelo infere a categoria pelo contexto semântico, sem treinamento adicional.",
+    "decisions": [
+      {
+        "title": "Zero-shot em vez de modelo fine-tuned",
+        "rationale": "Fine-tuning exige dataset rotulado, pipeline de treino e re-treino periódico. Zero-shot usa o modelo como está — a troca é precisão um pouco menor, mas deploy em horas, não semanas. Para triagem de e-mails corporativos, a precisão foi suficiente."
+      },
+      {
+        "title": "Cache de resultados por hash de mensagem",
+        "rationale": "Em planos free da Render o cold-start é lento e a inferência tem latência variável. Cache por hash do conteúdo garante resposta instantânea para mensagens repetidas — pattern comum em newsletters e notificações."
+      },
+      {
+        "title": "Deploy via Gunicorn + Docker na Render",
+        "rationale": "FastAPI + Uvicorn sozinhos não são suficientes para produção (sem process manager). Gunicorn gerencia workers e restarts. Docker garante paridade dev/prod e elimina surpresas de dependências."
+      }
+    ],
+    "challenges": [
+      {
+        "title": "Latência aceitável em planos free",
+        "howSolved": "Cache por hash de mensagem cobre a maioria dos casos repetidos. Para mensagens novas, a inferência leva 1-3s — aceitável para triagem assíncrona."
+      },
+      {
+        "title": "Cold-start do container na Render",
+        "howSolved": "Adicionei um health-check endpoint que mantém o container warm quando há tráfego regular. Para deploy no plano free, o cold-start de ~3s é o custo do tier."
+      }
+    ],
+    "deliveries": [
+      "Serviço de classificação zero-shot com score de confiança por categoria",
+      "Detecção de phishing, spam de marketing e e-mails críticos",
+      "Cache por hash de mensagem para resposta instantânea em e-mails repetidos",
+      "Deploy containerizado na Render via Docker + Gunicorn com cold-start < 3s"
+    ],
+    "learning": "Zero-shot funciona surpreendentemente bem para classificação semântica. O overhead de não ter dataset é real, mas o tempo economizado no pipeline de treino é enorme para projetos de escopo limitado."
+  },
   "githubRepo": "classifyemail"
 }

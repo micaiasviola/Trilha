@@ -183,7 +183,7 @@ export function HorizontalAttractions({ projects }: { projects: Project[] }) {
             Isso é só o<br />começo do parque.
           </h2>
           <p className="mt-5 max-w-sm text-ink-muted">
-            Novas atrações entram a cada semana de desenvolvimento.
+            Cada projeto é uma atração com história, decisões e aprendizados.
           </p>
           <Link
             href="/projetos"

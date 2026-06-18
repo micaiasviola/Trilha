@@ -13,28 +13,20 @@ import { STATUS_LABEL, formatLong } from "@/lib/format";
 import type { Project } from "@/lib/types";
 
 export interface StageStats {
-  weeks: number;
   deliveries: number;
   decisions: number;
+  challenges: number;
   technologies: number;
-}
-
-export interface StageWeek {
-  slug: string;
-  weekNumber: number;
-  title: string;
 }
 
 export function ProjectStage({
   project,
   index,
   stats,
-  weeks,
 }: {
   project: Project;
   index: number;
   stats: StageStats;
-  weeks: StageWeek[];
 }) {
   const root = useRef<HTMLDivElement>(null);
 
@@ -79,14 +71,22 @@ export function ProjectStage({
   const number = String(index + 1).padStart(2, "0");
 
   return (
-    <div ref={root} className="relative px-6 py-10 sm:px-10 lg:py-14">
-      {/* monumento generativo da atração (canvas 3D) */}
-      <GenerativeCanvas
-        seed={project.slug}
-        className="pointer-events-none absolute right-0 top-0 hidden h-full w-[54%] lg:block"
-      />
-      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] bg-gradient-to-r from-bg via-bg/30 to-transparent lg:block" />
+    <div ref={root} className="relative">
+      {/* Canvas — sticky: permanece visível enquanto o conteúdo rola */}
+      <div
+        aria-hidden
+        className="pointer-events-none sticky top-0 hidden h-[calc(100svh-4rem)] lg:block"
+        style={{ marginBottom: "calc(-1 * (100svh - 4rem))" }}
+      >
+        <GenerativeCanvas
+          seed={project.slug}
+          className="absolute right-0 top-0 h-full w-[54%]"
+        />
+        <div className="absolute inset-y-0 right-0 w-[54%] bg-gradient-to-r from-bg via-bg/30 to-transparent" />
+      </div>
 
+      {/* z-10 garante renderização acima do canvas */}
+      <div className="relative z-10 px-6 py-10 sm:px-10 lg:py-14">
       <div className="relative max-w-2xl">
         <div data-stage-fade className="flex items-center justify-between">
           <Magnetic strength={0.25}>
@@ -116,10 +116,7 @@ export function ProjectStage({
           <Words text={project.name} />
         </h1>
 
-        <p
-          data-stage-fade
-          className="mt-5 text-xl text-accent sm:text-2xl"
-        >
+        <p data-stage-fade className="mt-5 text-xl text-accent sm:text-2xl">
           {project.tagline}
         </p>
 
@@ -127,10 +124,7 @@ export function ProjectStage({
           {project.description}
         </p>
 
-        <dl
-          data-stage-fade
-          className="mt-8 grid grid-cols-2 gap-4 text-sm"
-        >
+        <dl data-stage-fade className="mt-8 grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="text-ink-faint">Papel</dt>
             <dd className="mt-0.5 text-ink">{project.role}</dd>
@@ -139,6 +133,12 @@ export function ProjectStage({
             <dt className="text-ink-faint">Início</dt>
             <dd className="mt-0.5 text-ink">{formatLong(project.startDate)}</dd>
           </div>
+          {project.endDate && (
+            <div>
+              <dt className="text-ink-faint">Conclusão</dt>
+              <dd className="mt-0.5 text-ink">{formatLong(project.endDate)}</dd>
+            </div>
+          )}
         </dl>
 
         <div data-stage-fade className="mt-6 flex flex-wrap gap-1.5">
@@ -148,13 +148,10 @@ export function ProjectStage({
         </div>
 
         {/* métricas da atração */}
-        <div
-          data-stage-fade
-          className="mt-10 grid grid-cols-4 gap-3"
-        >
-          <StageStat value={stats.weeks} label="Semanas" />
+        <div data-stage-fade className="mt-10 grid grid-cols-4 gap-3">
           <StageStat value={stats.deliveries} label="Entregas" />
           <StageStat value={stats.decisions} label="Decisões" />
+          <StageStat value={stats.challenges} label="Desafios" />
           <StageStat value={stats.technologies} label="Techs" />
         </div>
 
@@ -174,27 +171,104 @@ export function ProjectStage({
           </div>
         )}
 
-        {weeks.length > 0 && (
+        {/* História do projeto */}
+        {project.story && (
+          <>
+            {project.story.decisions.length > 0 && (
+              <div data-stage-fade className="mt-10">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+                  Decisões
+                </h2>
+                <div className="mt-4 space-y-3">
+                  {project.story.decisions.map((d, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border border-line bg-bg-card p-4"
+                    >
+                      <h3 className="font-semibold text-ink">{d.title}</h3>
+                      <p className="mt-1.5 text-sm text-ink-muted">
+                        {d.rationale}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {project.story.challenges.length > 0 && (
+              <div data-stage-fade className="mt-10">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+                  Desafios
+                </h2>
+                <div className="mt-4 space-y-3">
+                  {project.story.challenges.map((c, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl border border-line bg-bg-card p-4"
+                    >
+                      <h3 className="font-semibold text-ink">{c.title}</h3>
+                      <p className="mt-1.5 text-sm text-ink-muted">
+                        {c.howSolved}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {project.story.deliveries.length > 0 && (
+              <div data-stage-fade className="mt-10">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+                  Entregas
+                </h2>
+                <ul className="mt-4 space-y-2">
+                  {project.story.deliveries.map((d, i) => (
+                    <li key={i} className="flex gap-2 text-ink-muted">
+                      <span className="text-accent">▸</span>
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {project.story.learning && (
+              <div data-stage-fade className="mt-10">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
+                  Aprendizado
+                </h2>
+                <blockquote className="mt-4 border-l-2 border-accent pl-4 text-lg italic text-ink">
+                  {project.story.learning}
+                </blockquote>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Marcos do projeto */}
+        {project.milestones && project.milestones.length > 0 && (
           <div data-stage-fade className="mt-10">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
-              Semanas nesta atração
+              Marcos
             </h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {weeks.map((w) => (
-                <Link
-                  key={w.slug}
-                  href={`/semanas/${w.slug}`}
-                  className="rounded-lg border border-line bg-bg-card px-3 py-1.5 text-sm text-ink transition-colors hover:border-accent/40"
-                >
-                  <span className="font-mono text-xs text-accent-cyan">
-                    S{w.weekNumber}
-                  </span>{" "}
-                  {w.title}
-                </Link>
+            <ol className="mt-4 space-y-3">
+              {project.milestones.map((m, i) => (
+                <li key={i} className="flex gap-3 text-sm">
+                  <span className="mt-0.5 shrink-0 font-mono text-xs text-accent-cyan">
+                    {formatLong(m.date)}
+                  </span>
+                  <div>
+                    <span className="text-ink">{m.title}</span>
+                    {m.note && (
+                      <p className="mt-0.5 text-ink-muted">{m.note}</p>
+                    )}
+                  </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

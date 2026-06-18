@@ -29,41 +29,53 @@ tecnologias usadas, desafios enfrentados, entregas e aprendizados.
 
 ---
 
-## Parte 2 — Prompt para gerar conteúdo a partir de anotações brutas
+## Parte 2 — Prompt para gerar conteúdo de projeto a partir de anotações brutas
 
-Cole este prompt + suas anotações da semana para gerar um arquivo de conteúdo válido.
+Cole este prompt + suas anotações para gerar um arquivo de projeto válido.
 
 ```
-Você vai converter minhas anotações brutas de uma semana de trabalho em um
-arquivo JSON de "semana" para o site Trilhado Desenvolvimento.
+Você vai converter minhas anotações brutas de trabalho na ECQUA em um arquivo
+JSON de PROJETO para o site Trilhado Desenvolvimento.
 
 Regras:
-- Tom didático e em 1ª pessoa, português do Brasil.
-- Para cada DECISÃO, explique o racional (o "porquê") e alternativas descartadas.
+- Tom didático, 1ª pessoa, português do Brasil.
+- A unidade é o PROJETO (não a semana). NÃO organize por calendário nem crie
+  estrutura semanal. Organize a narrativa por marcos, decisões e desafios.
+- Para cada DECISÃO, explique o racional (o porquê) e alternativas descartadas.
 - Para cada DESAFIO, explique o problema e como foi resolvido (ou se segue aberto).
-- Liste tecnologias como nomes canônicos (ex.: "Next.js", "Supabase", "PostgreSQL").
-- Não invente fatos; se faltar info, deixe o campo vazio e marque com TODO.
-- Saída APENAS no schema JSON de "semana" descrito abaixo.
+- Tecnologias com nomes canônicos (ex.: "Next.js", "Supabase", "PostgreSQL").
+- `milestones` é opcional; use só para marcos reais com data, sem cadência.
+- Não invente fatos; se faltar info, deixe vazio e marque com TODO.
+- Saída APENAS no schema JSON de "projeto" descrito abaixo.
 
-Schema de "semana":
+Schema de "projeto":
 {
-  "slug": "2026-w24",                  // ano + número ISO da semana
-  "weekNumber": 24,
-  "startDate": "2026-06-08",           // segunda-feira (YYYY-MM-DD)
-  "endDate": "2026-06-14",             // domingo
-  "title": "Título curto e marcante da semana",
-  "summary": "1-2 frases resumindo o arco da semana.",
-  "projects": ["slug-do-projeto"],     // referência a projetos (Parte 3)
-  "technologies": ["Next.js", "Supabase"],
-  "deliveries": ["Entrega concreta 1", "Entrega 2"],
-  "decisions": [
-    { "title": "Decisão tomada", "rationale": "Por quê, alternativas e trade-offs." }
-  ],
-  "challenges": [
-    { "title": "Desafio", "howSolved": "Como resolvi ou estado atual." }
-  ],
-  "learning": "O principal aprendizado da semana.",
-  "notes": "Texto livre opcional (markdown simples)."
+  "slug": "erp-obras",
+  "name": "ERP de Obras",
+  "tagline": "Frase curta do que o projeto resolve.",
+  "description": "Parágrafo de contexto do projeto na ECQUA.",
+  "status": "in-progress",             // "in-progress" | "shipped" | "paused"
+  "role": "Tech PM & Full-Stack Dev",
+  "order": 1,                          // ordem na sequência do showcase
+  "startDate": "2026-01-06",
+  "endDate": null,                     // data quando shipped/paused; senão null
+  "technologies": ["Next.js", "TypeScript", "Supabase", "PostgreSQL"],
+  "highlights": ["Destaque 1", "Destaque 2"],
+  "accentColor": "#3c72c6",            // cor de acento para o fundo da camada
+  "story": {
+    "context": "Por que o projeto existe e o estado inicial.",
+    "decisions": [
+      { "title": "Decisão", "rationale": "Porquê, alternativas e trade-offs." }
+    ],
+    "challenges": [
+      { "title": "Desafio", "howSolved": "Como resolvi ou estado atual." }
+    ],
+    "deliveries": ["Entrega 1", "Entrega 2"],
+    "learning": "Principal aprendizado do projeto."
+  },
+  "milestones": [                      // OPCIONAL: marcos reais, sem cadência
+    { "date": "2026-02-10", "title": "Marco", "note": "Opcional." }
+  ]
 }
 
 Minhas anotações:
@@ -72,23 +84,9 @@ Minhas anotações:
 
 ---
 
-## Parte 3 — Schema de "projeto"
+## Parte 3 — Schema de "projeto" (referência rápida)
 
-Arquivo por projeto em `content/projects/<slug>.json`:
-
-```
-{
-  "slug": "erp-obras",
-  "name": "ERP de Obras",
-  "tagline": "Frase curta do que o projeto resolve.",
-  "description": "Parágrafo descritivo do projeto e do contexto na ECQUA.",
-  "status": "in-progress",             // "in-progress" | "shipped" | "paused"
-  "role": "Tech PM & Full-Stack Dev",
-  "startDate": "2026-01-06",
-  "technologies": ["Next.js", "TypeScript", "Supabase", "PostgreSQL"],
-  "highlights": ["Destaque 1", "Destaque 2"]
-}
-```
+Arquivo por projeto em `content/projects/<slug>.json`. Ver schema completo na Parte 2.
 
 ---
 
@@ -100,25 +98,22 @@ Quando formos preencher de verdade, as fontes a varrer:
 - Notas de reunião / decisões de arquitetura.
 - Releases e changelogs.
 
-Saída esperada: 1 arquivo JSON por semana em `content/weeks/` e 1 por projeto em
-`content/projects/`. Período-alvo: **dez/2025 → jun/2026** (~26 semanas).
+Saída esperada: 1 arquivo JSON por projeto em `content/projects/`.
+Use o prompt da Parte 2 para converter anotações brutas em cada arquivo.
 
 > ⚠️ Não commitar segredos, dados de clientes ou credenciais. Conteúdo deve ser
 > uma narrativa técnica, não dump de dados internos.
 
 ---
 
-## Parte 5 — Arquitetura técnica do MVP
+## Parte 5 — Arquitetura técnica atual
 
 - **Next.js (App Router) + TypeScript + Tailwind CSS.**
 - Conteúdo em **arquivos JSON** lidos em build time (Server Components + `fs`).
 - Rotas:
-  - `/` — home (hero, métricas, timeline recente, projetos em destaque)
-  - `/linha-do-tempo` — timeline completa com filtro por tecnologia (interativo)
-  - `/semanas/[slug]` — detalhe da semana
+  - `/` — showcase em profundidade (depth scroll) navegando entre projetos
+  - `/linha-do-tempo` — lista acessível de projetos em ordem cronológica
   - `/projetos` — grade de projetos
-  - `/projetos/[slug]` — detalhe do projeto + semanas relacionadas
+  - `/projetos/[slug]` — história completa do projeto (contexto, decisões, desafios, entregas, aprendizado, marcos)
+- Deep-link: `/?projeto=<slug>` abre diretamente no projeto da home.
 - Deploy alvo: **Vercel**.
-
-Status atual: **MVP com conteúdo de exemplo** (marcado como placeholder). Próximo
-passo: substituir `content/` pelos dados reais da ECQUA.

@@ -1,0 +1,114 @@
+/* ================================================
+   Depth Scroll — Stage, Layers, Nav overlay
+   Perf: GPU-composited transform/opacity only.
+   No backdrop-filter, no mix-blend-mode (both force
+   per-frame readback over the moving layers).
+   ================================================ */
+
+.depth-stage {
+  position: relative;
+  overflow: hidden;
+  perspective: 1200px;
+  touch-action: none;
+  isolation: isolate;
+  background: #07070d;
+  contain: layout paint;
+}
+
+.depth-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  /* signed distance (in layer units) from the focused layer */
+  --rel: calc(var(--i) - var(--depth-progress, 0) * (var(--count) - 1));
+  --abs-rel: max(var(--rel), calc(var(--rel) * -1));
+  transform:
+    translateZ(calc(var(--rel) * -320px))
+    scale(calc(1 - var(--abs-rel) * 0.04))
+    translate(
+      calc(var(--depth-pointer-x, 0) * 22px),
+      calc(var(--depth-pointer-y, 0) * 14px)
+    );
+  /* crossfade: only layers within ±1 of focus are visible */
+  opacity: calc(1 - min(var(--abs-rel), 1));
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  contain: layout paint;
+}
+
+/* velocity → subtle atmosphere overlay (plain alpha, cheap to composite) */
+.depth-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(120% 120% at 50% 45%, rgba(255, 255, 255, 0.06), transparent 60%);
+  opacity: calc(var(--depth-speed, 0) * 0.5);
+}
+
+/* ================================================
+   Fixed nav — timeline + specs overlay
+   ================================================ */
+
+.depth-nav {
+  position: fixed;
+  top: 4rem; /* below sticky site header (h-16) */
+  right: 0;
+  bottom: 0;
+  width: 17rem;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.25rem;
+  pointer-events: auto;
+  z-index: 40;
+  /* opaque gradient instead of backdrop-filter — legible, zero per-frame cost */
+  background: linear-gradient(
+    to left,
+    rgba(7, 7, 13, 0.94) 0%,
+    rgba(7, 7, 13, 0.82) 52%,
+    rgba(7, 7, 13, 0) 100%
+  );
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.depth-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.depth-nav-timeline {
+  flex: 0 0 auto;
+}
+
+.depth-nav-specs {
+  flex: 1 1 auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1.25rem;
+  margin-top: 1.25rem;
+  overflow: hidden;
+}
+
+/* hide detailed nav on small screens — touch swipe still works */
+@media (max-width: 767px) {
+  .depth-nav {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-layer {
+    transition: none;
+    transform: none !important;
+    opacity: 1 !important;
+    will-change: auto;
+  }
+  /* without depth, stacked layers would overlap — show only the active one */
+  .depth-layer:not([data-active='true']) {
+    visibility: hidden;
+  }
+  .depth-stage::after {
+    display: none;
+  }
+}

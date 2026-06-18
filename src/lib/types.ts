@@ -10,21 +10,18 @@ export interface Challenge {
   howSolved: string;
 }
 
-export interface Week {
-  slug: string;
-  weekNumber: number;
-  startDate: string;
-  endDate: string;
+export interface Milestone {
+  date: string;
   title: string;
-  summary: string;
-  projects: string[];
-  technologies: string[];
-  deliveries: string[];
+  note?: string;
+}
+
+export interface ProjectStory {
+  context: string;
   decisions: Decision[];
   challenges: Challenge[];
+  deliveries: string[];
   learning?: string;
-  notes?: string;
-  placeholder?: boolean;
 }
 
 export interface Project {
@@ -34,9 +31,15 @@ export interface Project {
   description: string;
   status: ProjectStatus;
   role: string;
+  order: number;
   startDate: string;
+  endDate?: string | null;
   technologies: string[];
   highlights: string[];
+  cover?: string;
+  accentColor?: string;
+  story?: ProjectStory;
+  milestones?: Milestone[];
   githubRepo?: string;
   placeholder?: boolean;
 }
