@@ -35,6 +35,13 @@
   will-change: transform, opacity;
   backface-visibility: hidden;
   contain: layout paint;
+  /* invisible upper layers must not intercept clicks meant for the active card.
+     Wheel/pointer still reach the engine — its listeners are on .depth-stage. */
+  pointer-events: none;
+}
+
+.depth-layer[data-active='true'] {
+  pointer-events: auto;
 }
 
 /* velocity → subtle atmosphere overlay (plain alpha, cheap to composite) */
