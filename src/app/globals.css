@@ -97,60 +97,6 @@
   animation: float 7s ease-in-out infinite;
 }
 
-/* ── Cursor personalizado (TREINO-CURSOR) ── */
-.cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 999;
-  pointer-events: none;
-  mix-blend-mode: difference;
-  display: none;
-}
-html.has-fine-pointer .cursor {
-  display: block;
-}
-.cursor-dot {
-  position: absolute;
-  top: -3px;
-  left: -3px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #fff;
-}
-.cursor-ring {
-  position: absolute;
-  top: -18px;
-  left: -18px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1.2px solid rgba(255, 255, 255, 0.85);
-  transition:
-    transform 0.45s cubic-bezier(0.34, 1.4, 0.44, 1),
-    opacity 0.3s ease;
-}
-.cursor.is-active .cursor-ring {
-  transform: scale(1.9);
-}
-.cursor.is-active .cursor-dot {
-  opacity: 0;
-}
-.cursor.is-pressed .cursor-ring {
-  transform: scale(0.8);
-}
-/* Esconde o cursor nativo SÓ com JS ativo E ponteiro fino → failsafe */
-html.js.has-fine-pointer,
-html.js.has-fine-pointer a,
-html.js.has-fine-pointer button,
-html.js.has-fine-pointer input,
-html.js.has-fine-pointer textarea,
-html.js.has-fine-pointer select,
-html.js.has-fine-pointer [data-cursor-hot] {
-  cursor: none;
-}
-
 /* ── Odômetro (TREINO-SECOES §3) ── */
 .od {
   display: inline-flex;
@@ -199,8 +145,101 @@ html.no-js [data-preloader] {
   .animate-float {
     animation: none;
   }
-  .cursor,
   [data-preloader] {
     display: none !important;
+  }
+}
+
+/* ── Constelação de stacks: "salta" do centro do card no hover (ProjectStack) ── */
+.tech-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.tech-burst__chip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: rgba(17, 22, 31, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* repouso: recolhido no centro do card, invisível */
+  transform: translate(-50%, -50%) scale(0.2);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition:
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.4, 1),
+    opacity 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.tech-burst__chip svg {
+  width: 23px;
+  height: 23px;
+  fill: var(--tech-color, #e6edf3);
+}
+.tech-burst__fallback {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--tech-color, #e6edf3);
+}
+/* hover no card → cada chip salta para sua posição no anel, com mola + stagger */
+.group:hover .tech-burst__chip {
+  opacity: 1;
+  transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1);
+  transition-delay: var(--tech-delay);
+  border-color: color-mix(in srgb, var(--tech-color) 45%, transparent);
+  box-shadow:
+    0 10px 24px -8px color-mix(in srgb, var(--tech-color) 55%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--tech-color) 16%, transparent);
+}
+/* o conteúdo recua para a constelação virar o foco */
+.tech-burst-body {
+  transition: opacity 0.35s ease;
+}
+.group:hover .tech-burst-body {
+  opacity: var(--burst-dim, 0.3);
+}
+/* home (card brutalista do depth showcase): chips quadrados e opacos, com sombra
+   dura na cor da stack — sem backdrop-filter (as camadas se movem; ver
+   depthScrollStage.css). O conteúdo recua via combinador de irmãos, sem wrapper. */
+.tech-burst--hero .tech-burst__chip {
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  background: #13131c;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.tech-burst--hero .tech-burst__chip svg {
+  width: 28px;
+  height: 28px;
+}
+.tech-burst--hero .tech-burst__fallback {
+  font-size: 0.95rem;
+}
+.group:hover .tech-burst--hero .tech-burst__chip {
+  border-color: #fff;
+  box-shadow: 4px 4px 0 0 var(--tech-color);
+}
+.tech-burst--hero ~ * {
+  transition: opacity 0.35s ease;
+}
+.group:hover .tech-burst--hero ~ * {
+  opacity: 0.35;
+}
+/* acessibilidade: sem stagger quando o usuário pede menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  .tech-burst__chip {
+    transition-delay: 0s !important;
   }
 }

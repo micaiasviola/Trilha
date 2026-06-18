@@ -4,10 +4,20 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useDepthScroll } from '@/lib/depth/useDepthScroll'
 import { prefersReducedMotion } from '@/lib/anim/signal'
-import { TechBadge } from '@/components/Badge'
 import { STATUS_LABEL, formatLong } from '@/lib/format'
 import type { Project } from '@/lib/types'
+import { type GitGraphCommit, type GitGraphNode } from '@/components/depth/GitGraph'
+import { GitGraphBanner } from '@/components/depth/GitGraphBanner'
+import { ProjectStack } from '@/components/ProjectStack'
 import './depthScrollStage.css'
+
+// Per-project git data for the scroll-synced graph (built server-side).
+export interface ProjectGraphData {
+  total: number
+  branches: number
+  branchNames: string[]
+  commits: GitGraphCommit[]
+}
 
 type ShowcaseProject = Pick<
   Project,
@@ -24,8 +34,17 @@ type ShowcaseProject = Pick<
   | 'order'
 >
 
-export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[] }) {
+export function ProjectsDepthShowcase({
+  projects,
+  graph,
+}: {
+  projects: ShowcaseProject[]
+  graph?: ProjectGraphData[]
+}) {
   const [active, setActive] = useState(0)
+  // Fixed right-hand nav — receives the live scroll progress as `--p` so the
+  // git graph (a descendant) can animate in pure CSS, no per-frame re-render.
+  const navRef = useRef<HTMLElement>(null)
   const { ref, engine } = useDepthScroll({
     source: 'capture',
     captureMode: 'always',
@@ -38,7 +57,22 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
     length: projects.length * 520, // shorter depth per layer = faster traversal
     layerCount: projects.length,
     onLayerChange: setActive,
+    onUpdate: (s) => {
+      navRef.current?.style.setProperty('--p', s.progress.toFixed(4))
+    },
   })
+
+  // Merge display data + git data into nodes for the graph (same order).
+  const graphNodes: GitGraphNode[] = projects.map((p, i) => ({
+    slug: p.slug,
+    name: p.name,
+    accent: p.accentColor ?? '#3c72c6',
+    year: p.startDate.slice(0, 4),
+    total: graph?.[i]?.total ?? 0,
+    branches: graph?.[i]?.branches ?? 0,
+    branchNames: graph?.[i]?.branchNames ?? [],
+    commits: graph?.[i]?.commits ?? [],
+  }))
 
   // Read ?projeto=<slug> on mount and navigate to that project
   useEffect(() => {
@@ -82,6 +116,7 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
   }, [projects.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = projects[active]
+  const activeNode = graphNodes[active]
 
   return (
     <>
@@ -123,14 +158,18 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
             />
 
             {/* Main content — brutalist info card, nudged toward center */}
-            <div className="relative z-10 w-full pl-6 pr-6 sm:pl-10 md:pr-[18rem] lg:pl-[9vw] xl:pl-[13vw]">
+            <div className="relative z-10 w-full pl-6 pr-6 sm:pl-10 md:pr-[21rem] lg:pl-[9vw] xl:pl-[13vw]">
               <article
-                className="w-full max-w-md border-2 bg-[#0b0b12] p-6 sm:p-7"
-                style={{
-                  borderColor: 'rgba(255,255,255,0.9)',
-                  boxShadow: `8px 8px 0 0 ${project.accentColor ?? '#3c72c6'}`,
-                }}
+                className="depth-card group relative w-full max-w-md border-2 bg-[#0b0b12] p-6 sm:p-7"
+                style={
+                  {
+                    '--accent': project.accentColor ?? '#3c72c6',
+                  } as React.CSSProperties
+                }
               >
+                {/* Constelação das stacks — salta do centro do card no hover */}
+                <ProjectStack technologies={project.technologies} size="hero" />
+
                 {/* header strip */}
                 <div className="flex items-center justify-between gap-3">
                   <span className="bg-white px-2 py-0.5 font-mono text-xs font-bold tracking-[0.2em] text-black">
@@ -183,11 +222,11 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
                   </div>
                 )}
 
-                {/* CTA — solid fill, no backdrop-filter */}
+                {/* CTA — stretched ::after makes the whole card clickable */}
                 <Link
                   href={`/projetos/${project.slug}`}
                   tabIndex={i === active ? 0 : -1}
-                  className="mt-7 inline-block border-2 border-white bg-white px-5 py-2 font-mono text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-transparent hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  className="mt-7 inline-block border-2 border-white bg-white px-5 py-2 font-mono text-xs font-bold uppercase tracking-widest text-black transition-colors duration-150 hover:bg-transparent hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white after:absolute after:inset-0 after:content-['']"
                 >
                   Ver história →
                 </Link>
@@ -199,7 +238,12 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
 
       {/* Fixed nav overlay — position: fixed in CSS */}
       {current && (
-        <nav className="depth-nav" aria-label="Timeline de projetos">
+        <nav
+          ref={navRef}
+          className="depth-nav"
+          aria-label="Timeline de projetos"
+          style={{ '--p': 0 } as React.CSSProperties}
+        >
           {/* Timeline list */}
           <div className="depth-nav-timeline">
             <p className="mb-3 font-mono text-[0.6rem] uppercase tracking-widest text-white/25">
@@ -244,59 +288,45 @@ export function ProjectsDepthShowcase({ projects }: { projects: ShowcaseProject[
             </ol>
           </div>
 
-          {/* Active project specs */}
-          <div className="depth-nav-specs">
-            <p className="mb-3 font-mono text-[0.6rem] uppercase tracking-widest text-white/25">
-              Specs
-            </p>
-            <dl className="space-y-2.5">
-              <div>
-                <dt className="text-[0.65rem] text-white/25">Papel</dt>
-                <dd className="mt-0.5 text-xs text-white/65">{current.role}</dd>
-              </div>
-              <div>
-                <dt className="text-[0.65rem] text-white/25">Período</dt>
-                <dd className="mt-0.5 text-xs text-white/65">
-                  {formatLong(current.startDate)}
-                  {current.endDate
-                    ? ` → ${formatLong(current.endDate)}`
-                    : ' → presente'}
-                </dd>
-              </div>
-            </dl>
-
-            {current.technologies.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1">
-                {current.technologies.slice(0, 5).map((t) => (
-                  <TechBadge key={t} name={t} />
-                ))}
-                {current.technologies.length > 5 && (
-                  <span className="self-center text-[0.65rem] text-white/25">
-                    +{current.technologies.length - 5}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {current.highlights.length > 0 && (
-              <ul className="mt-3 space-y-2">
-                {current.highlights.slice(0, 2).map((h, i) => (
-                  <li key={i} className="flex gap-1.5 text-xs text-white/35">
-                    <span className="mt-px shrink-0 text-white/40">▸</span>
-                    <span className="line-clamp-2">{h}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
+          {/* Compact footer — jump to the active project's full story */}
+          <div className="depth-nav-foot">
             <Link
               href={`/projetos/${current.slug}`}
-              className="mt-4 block text-xs text-white/35 transition-colors hover:text-white/65"
+              className="block text-xs text-white/35 transition-colors hover:text-white/65"
             >
-              ver detalhe →
+              ver detalhe de {current.name} →
             </Link>
           </div>
         </nav>
+      )}
+
+      {/* Git tree — generative banner, pinned top-right (the wide area) */}
+      {activeNode && (
+        <div className="depth-tree-overlay">
+          <div className="depth-nav-graph-head depth-tree-overlay-head">
+            <p className="depth-nav-label">Git Tree</p>
+            <p className="git-graph-caption">
+              <span
+                className="git-graph-dot"
+                style={{ background: activeNode.accent }}
+                aria-hidden
+              />
+              <span className="git-graph-cap-name">{activeNode.name}</span>
+              <span className="git-graph-cap-meta">
+                {activeNode.total > 0 ? `${activeNode.total} commits` : 'sem commits'}
+                {activeNode.branches > 0
+                  ? ` · ${activeNode.branches} ${activeNode.branches === 1 ? 'branch' : 'branches'}`
+                  : ''}
+              </span>
+            </p>
+          </div>
+          <GitGraphBanner
+            key={activeNode.slug}
+            total={activeNode.total}
+            accent={activeNode.accent}
+            commitTypes={activeNode.commits.map((c) => c.type)}
+          />
+        </div>
       )}
     </>
   )

@@ -72,18 +72,51 @@ export function ProjectStage({
 
   return (
     <div ref={root} className="relative">
-      {/* Canvas — sticky: permanece visível enquanto o conteúdo rola */}
-      <div
-        aria-hidden
-        className="pointer-events-none sticky top-0 hidden h-[calc(100svh-4rem)] lg:block"
-        style={{ marginBottom: "calc(-1 * (100svh - 4rem))" }}
-      >
-        <GenerativeCanvas
-          seed={project.slug}
-          className="absolute right-0 top-0 h-full w-[54%]"
-        />
-        <div className="absolute inset-y-0 right-0 w-[54%] bg-gradient-to-r from-bg via-bg/30 to-transparent" />
-      </div>
+      {/* Fundo da atração */}
+      {project.slug === "ecqua-360" ? (
+        /* ECQUA-360: pôster vetorizado repetido + torre wireframe por cima */
+        <>
+          {/* Camada 1 — pôster repetido até o fim da página */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] opacity-80 lg:block"
+            style={{
+              backgroundImage: "url(/ecqua-360-bg.svg)",
+              backgroundRepeat: "repeat-y",
+              backgroundSize: "100% auto",
+            }}
+          />
+          {/* Camada 2 — fade de legibilidade sobre o texto */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] bg-gradient-to-r from-bg via-bg/40 to-transparent lg:block"
+          />
+          {/* Camada 3 — torre wireframe (sticky) à esquerda, atrás da descrição */}
+          <div
+            aria-hidden
+            className="pointer-events-none sticky top-0 hidden h-[calc(100svh-4rem)] lg:block"
+            style={{ marginBottom: "calc(-1 * (100svh - 4rem))" }}
+          >
+            <GenerativeCanvas
+              seed={project.slug}
+              className="absolute left-0 top-0 h-full w-[54%]"
+            />
+          </div>
+        </>
+      ) : (
+        /* Canvas generativo sticky — permanece visível enquanto o conteúdo rola */
+        <div
+          aria-hidden
+          className="pointer-events-none sticky top-0 hidden h-[calc(100svh-4rem)] lg:block"
+          style={{ marginBottom: "calc(-1 * (100svh - 4rem))" }}
+        >
+          <GenerativeCanvas
+            seed={project.slug}
+            className="absolute right-0 top-0 h-full w-[54%]"
+          />
+          <div className="absolute inset-y-0 right-0 w-[54%] bg-gradient-to-r from-bg via-bg/30 to-transparent" />
+        </div>
+      )}
 
       {/* z-10 garante renderização acima do canvas */}
       <div className="relative z-10 px-6 py-10 sm:px-10 lg:py-14">

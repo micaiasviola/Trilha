@@ -6,6 +6,7 @@ import { markIntroReady, prefersReducedMotion } from "@/lib/anim/signal";
 import { getLenis } from "./SmoothScroll";
 
 const ATTRACTIONS = ["entradas", "atrações", "trilha", "decisões", "pronto"];
+const SESSION_KEY = "trilhado:preloaded";
 
 export function Preloader() {
   const root = useRef<HTMLDivElement>(null);
@@ -15,6 +16,17 @@ export function Preloader() {
     () => {
       // Reduced motion: nada de preloader, libera a entrada na hora.
       if (prefersReducedMotion()) {
+        markIntroReady();
+        setGone(true);
+        return;
+      }
+
+      // Intro só uma vez por sessão da aba — recarregar não repete os ~3s.
+      let seenThisSession = false;
+      try {
+        seenThisSession = sessionStorage.getItem(SESSION_KEY) === "1";
+      } catch {}
+      if (seenThisSession) {
         markIntroReady();
         setGone(true);
         return;
@@ -30,14 +42,21 @@ export function Preloader() {
       const label = el.querySelector<HTMLElement>("[data-label]");
       const state = { v: 0 };
 
-      const tl = gsap.timeline({
-        onComplete: () => {
-          lenis?.start();
-          ScrollTrigger.refresh();
-          markIntroReady();
-          setGone(true);
-        },
-      });
+      // Encerra a intro uma única vez — no fim natural ou quando o usuário pula.
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        try {
+          sessionStorage.setItem(SESSION_KEY, "1");
+        } catch {}
+        lenis?.start();
+        ScrollTrigger.refresh();
+        markIntroReady();
+        setGone(true);
+      };
+
+      const tl = gsap.timeline({ onComplete: finish });
 
       tl.to(state, {
         v: 100,
@@ -66,6 +85,27 @@ export function Preloader() {
           { clipPath: "inset(0 0 100% 0)", duration: 0.85, ease: EASE.wipe },
           "-=0.3",
         );
+
+      // O overlay cobre a tela inteira por ~3s; sem isto ele engole todos os
+      // clicks até terminar. Qualquer interação adianta a intro na hora.
+      const skipEvents = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+      const skip = () => {
+        skipEvents.forEach((ev) => window.removeEventListener(ev, skip));
+        tl.pause();
+        gsap.to(tl, {
+          progress: 1,
+          duration: 0.35,
+          ease: "power2.in",
+          onComplete: finish,
+        });
+      };
+      skipEvents.forEach((ev) =>
+        window.addEventListener(ev, skip, { passive: true }),
+      );
+
+      return () => {
+        skipEvents.forEach((ev) => window.removeEventListener(ev, skip));
+      };
     },
     { scope: root },
   );

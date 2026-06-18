@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Git graph ANIMADO (autocontido) — Trilhado Dev
+  A animação (CSS abaixo) toca sozinha ao abrir o arquivo / quando usado em <img>.
+
+  ⚠️  ESTE arquivo NÃO é pra importar no SVGator (a animação seria descartada).
+      Para editar o DESIGN no SVGator, use o "git-graph.svg" (versão estática).
+      Fluxo: edita o design no SVGator → exporta → eu reaplico esta animação.
+
+  Mesma arte do git-graph.svg, com 3 ingredientes de animação:
+    • .gg-line  → linhas "se desenhando" (stroke-dashoffset 1→0)
+    • .gg-pop   → dots/merges surgindo (opacity + scale), em cascata via animation-delay
+    • prefers-reduced-motion → tudo já no estado final, sem movimento
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1200"
+  height="360"
+  viewBox="0 0 1200 360"
+  fill="none"
+>
+  <title>Git graph animado — Trilhado Dev</title>
+
+  <style>
+    /* Linhas: tronco + branches se desenhando */
+    .gg-line {
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: gg-draw 1.2s ease-out both;
+    }
+    #branch-pr1 { animation-duration: .9s; animation-delay: .5s; }
+    #branch-pr2 { animation-duration: .9s; animation-delay: .9s; }
+
+    /* Dots e merges: surgem com um "pop" */
+    .gg-pop {
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: gg-pop .45s cubic-bezier(.34, 1.56, .64, 1) both;
+    }
+
+    @keyframes gg-draw { to { stroke-dashoffset: 0; } }
+    @keyframes gg-pop {
+      from { opacity: 0; transform: scale(0); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* Acessibilidade: sem movimento → mostra o estado final */
+    @media (prefers-reduced-motion: reduce) {
+      .gg-line { stroke-dashoffset: 0; animation: none; }
+      .gg-pop  { opacity: 1; transform: none; animation: none; }
+    }
+  </style>
+
+  <!-- Fundo -->
+  <g id="background">
+    <rect x="0" y="0" width="1200" height="360" fill="#0a0e14" />
+  </g>
+
+  <!-- Linhas: tronco main + duas passagens da branch scrollable -->
+  <g id="lines">
+    <path
+      id="trunk"
+      class="gg-line"
+      d="M 80 180 H 1120"
+      stroke="#3c72c6"
+      stroke-width="3"
+      pathLength="1"
+    />
+    <path
+      id="branch-pr1"
+      class="gg-line"
+      d="M 330 180 C 375 180 388 80 440 80 L 500 80 C 552 80 565 180 610 180"
+      stroke="#3c72c6"
+      stroke-width="2.5"
+      stroke-opacity="0.55"
+      pathLength="1"
+    />
+    <path
+      id="branch-pr2"
+      class="gg-line"
+      d="M 770 180 C 818 180 832 280 885 280 L 955 280 C 1008 280 1022 180 1040 180"
+      stroke="#3c72c6"
+      stroke-width="2.5"
+      stroke-opacity="0.55"
+      pathLength="1"
+    />
+  </g>
+
+  <!-- Commits na main (cor = tipo), cascata esq→dir -->
+  <g id="commits-main" stroke="#0a0e14" stroke-width="2.5">
+    <circle id="commit-main-1" class="gg-pop" style="animation-delay:.20s" cx="130"  cy="180" r="6.5" fill="#34d399" />
+    <circle id="commit-main-2" class="gg-pop" style="animation-delay:.35s" cx="250"  cy="180" r="6.5" fill="#34d399" />
+    <circle id="commit-main-3" class="gg-pop" style="animation-delay:.60s" cx="470"  cy="180" r="6.5" fill="#fbbf24" />
+    <circle id="commit-main-4" class="gg-pop" style="animation-delay:.85s" cx="690"  cy="180" r="6.5" fill="#34d399" />
+    <circle id="commit-main-5" class="gg-pop" style="animation-delay:1.05s" cx="870" cy="180" r="6.5" fill="#22d3ee" />
+    <circle id="commit-main-6" class="gg-pop" style="animation-delay:1.35s" cx="1100" cy="180" r="6.5" fill="#34d399" />
+  </g>
+
+  <!-- Commits da branch scrollable — PR #1 (lane superior) -->
+  <g id="commits-pr1" stroke="#0a0e14" stroke-width="2.5">
+    <circle id="commit-pr1-1" class="gg-pop" style="animation-delay:.95s" cx="452" cy="80" r="6.5" fill="#34d399" />
+    <circle id="commit-pr1-2" class="gg-pop" style="animation-delay:1.05s" cx="492" cy="80" r="6.5" fill="#fbbf24" />
+  </g>
+
+  <!-- Commits da branch scrollable — PR #2 (lane inferior) -->
+  <g id="commits-pr2" stroke="#0a0e14" stroke-width="2.5">
+    <circle id="commit-pr2-1" class="gg-pop" style="animation-delay:1.35s" cx="900" cy="280" r="6.5" fill="#34d399" />
+    <circle id="commit-pr2-2" class="gg-pop" style="animation-delay:1.45s" cx="945" cy="280" r="6.5" fill="#22d3ee" />
+  </g>
+
+  <!-- Nós de merge (PRs) — anel oco sobre o tronco -->
+  <g id="merges" fill="#0a0e14" stroke="#3c72c6" stroke-width="3">
+    <circle id="merge-pr-1" class="gg-pop" style="animation-delay:1.45s" cx="610"  cy="180" r="8.5" />
+    <circle id="merge-pr-2" class="gg-pop" style="animation-delay:1.85s" cx="1040" cy="180" r="8.5" />
+  </g>
+</svg>

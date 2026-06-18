@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Git graph (fonte para o SVGator) — Trilhado Dev
+  Horizontal · minimalista · estrutura "scrollable" forka/merge 2x (PR #1, PR #2).
+
+  Como animar no SVGator:
+    • #trunk, #branch-pr1, #branch-pr2  → animator "Draw" (stroke do começo→fim)
+    • grupos #commits-* (circles)        → Scale 0→1 + Opacity 0→1 com Stagger
+    • #merges (PR)                       → entram quando a branch volta ao trunk
+  Tudo já vem com fill="none" nas linhas para o Draw funcionar direto.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1200"
+  height="360"
+  viewBox="0 0 1200 360"
+  fill="none"
+>
+  <title>Git graph — Trilhado Dev</title>
+
+  <!-- Fundo (deletável no SVGator se quiser export transparente) -->
+  <g id="background">
+    <rect x="0" y="0" width="1200" height="360" fill="#0a0e14" />
+  </g>
+
+  <!-- Linhas: tronco main + duas passagens da branch scrollable -->
+  <g id="lines" fill="none" stroke-linecap="round">
+    <path
+      id="trunk"
+      d="M 80 180 H 1120"
+      stroke="#3c72c6"
+      stroke-width="3"
+    />
+    <path
+      id="branch-pr1"
+      d="M 330 180 C 375 180 388 80 440 80 L 500 80 C 552 80 565 180 610 180"
+      stroke="#3c72c6"
+      stroke-width="2.5"
+      stroke-opacity="0.55"
+    />
+    <path
+      id="branch-pr2"
+      d="M 770 180 C 818 180 832 280 885 280 L 955 280 C 1008 280 1022 180 1040 180"
+      stroke="#3c72c6"
+      stroke-width="2.5"
+      stroke-opacity="0.55"
+    />
+  </g>
+
+  <!-- Commits na main (cor = tipo) -->
+  <g id="commits-main" stroke="#0a0e14" stroke-width="2.5">
+    <circle id="commit-main-1" cx="130"  cy="180" r="6.5" fill="#34d399" />
+    <circle id="commit-main-2" cx="250"  cy="180" r="6.5" fill="#34d399" />
+    <circle id="commit-main-3" cx="470"  cy="180" r="6.5" fill="#fbbf24" />
+    <circle id="commit-main-4" cx="690"  cy="180" r="6.5" fill="#34d399" />
+    <circle id="commit-main-5" cx="870"  cy="180" r="6.5" fill="#22d3ee" />
+    <circle id="commit-main-6" cx="1100" cy="180" r="6.5" fill="#34d399" />
+  </g>
+
+  <!-- Commits da branch scrollable — PR #1 (lane superior) -->
+  <g id="commits-pr1" stroke="#0a0e14" stroke-width="2.5">
+    <circle id="commit-pr1-1" cx="452" cy="80" r="6.5" fill="#34d399" />
+    <circle id="commit-pr1-2" cx="492" cy="80" r="6.5" fill="#fbbf24" />
+  </g>
+
+  <!-- Commits da branch scrollable — PR #2 (lane inferior) -->
+  <g id="commits-pr2" stroke="#0a0e14" stroke-width="2.5">
+    <circle id="commit-pr2-1" cx="900" cy="280" r="6.5" fill="#34d399" />
+    <circle id="commit-pr2-2" cx="945" cy="280" r="6.5" fill="#22d3ee" />
+  </g>
+
+  <!-- Nós de merge (PRs) — anel oco sobre o tronco -->
+  <g id="merges" fill="#0a0e14" stroke="#3c72c6" stroke-width="3">
+    <circle id="merge-pr-1" cx="610"  cy="180" r="8.5" />
+    <circle id="merge-pr-2" cx="1040" cy="180" r="8.5" />
+  </g>
+</svg>

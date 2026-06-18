@@ -1,0 +1,47 @@
+{
+  "slug": "user-autentication-in-c",
+  "name": "Sistema de Cadastro em C",
+  "tagline": "Autenticação e cadastro de produtos em C puro — memória manual, arquivos como banco de dados.",
+  "description": "Projeto de faculdade em C que começou como exercício de autenticação de usuário e cresceu para um sistema de cadastro de produtos para um contexto de hortifruti. Sem bibliotecas externas, sem ORM, sem banco — tudo: structs, ponteiros e arquivos de texto. Foi o primeiro projeto em que precisei pensar em persistência de dados de verdade.",
+  "status": "shipped",
+  "role": "Dev",
+  "order": 6,
+  "startDate": "2024-09-08",
+  "endDate": "2024-09-22",
+  "technologies": ["C"],
+  "highlights": [
+    "Autenticação com leitura e comparação de credenciais em arquivo de texto — sem hash, propositalmente simples para focar no fluxo",
+    "Persistência de produtos via leitura e escrita direta em .txt com separadores de campo",
+    "73 commits em 14 dias: ciclo de iteração rápida típico de aprendizado intensivo"
+  ],
+  "story": {
+    "context": "Era a primeira vez que eu construía algo que precisasse persistir estado entre execuções. Em Java ou Python você tem bibliotecas que abstraem tudo — em C você lida com fopen, fwrite e ponteiros diretamente. O objetivo era entender o que acontece por baixo: como autenticação funciona sem um framework, e como dados sobrevivem ao processo terminar.",
+    "decisions": [
+      {
+        "title": "Arquivos de texto como persistência",
+        "rationale": "Poderia ter usado SQLite, mas o ponto era entender o mecanismo. Ler e escrever campos delimitados por | num .txt obrigou a pensar em parsing manual, controle de buffer e tratamento de EOF — habilidades que frameworks escondem."
+      },
+      {
+        "title": "Autenticação sem hash na primeira versão",
+        "rationale": "A decisão consciente de não implementar hash foi pedagógica: primeiro fazer funcionar — usuário, senha, comparação direta. O aprendizado sobre segurança viria depois, mas entender o fluxo básico primeiro evita confundir os dois problemas."
+      }
+    ],
+    "challenges": [
+      {
+        "title": "Gerenciar strings em C sem estourar buffer",
+        "howSolved": "Aprendi a diferença entre strcpy e strncpy na prática — via segfault. Passei a definir tamanhos máximos de campo como constantes e a usar strncpy com n explícito em toda leitura de arquivo e entrada do usuário."
+      },
+      {
+        "title": "Atualizar um registro em arquivo sem banco de dados",
+        "howSolved": "C não tem UPDATE. Para editar um produto, precisa ler tudo, modificar em memória, e reescrever o arquivo do zero. Implementei exatamente isso — reforçou como bancos de dados são uma abstração valiosa sobre I/O de arquivo."
+      }
+    ],
+    "deliveries": [
+      "Autenticação de usuário com leitura de credenciais em arquivo",
+      "CRUD de produtos: cadastro, listagem, busca por ID e remoção",
+      "Persistência entre execuções via arquivo de texto com campos delimitados"
+    ],
+    "learning": "C te ensina que toda abstração tem um custo — e um valor. Depois desse projeto, nunca mais vi um ORM como 'mágica'. Ele resolve um problema real: o problema que eu resolvi à mão em 73 commits."
+  },
+  "githubRepo": "User-autentication-in-C"
+}

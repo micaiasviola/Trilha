@@ -3,9 +3,9 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { FooterGate } from "@/components/FooterGate";
 import { SmoothScroll } from "@/components/anim/SmoothScroll";
 import { Preloader } from "@/components/anim/Preloader";
-import { Cursor } from "@/components/anim/Cursor";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
@@ -36,11 +36,12 @@ export default function RootLayout({
           }}
         />
         <Preloader />
-        <Cursor />
         <SmoothScroll>
           <Header />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <FooterGate>
+            <Footer />
+          </FooterGate>
         </SmoothScroll>
       </body>
     </html>

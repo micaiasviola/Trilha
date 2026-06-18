@@ -5,6 +5,7 @@ import { gsap, useGSAP, EASE } from "@/lib/anim/gsap";
 import { onIntroReady, prefersReducedMotion } from "@/lib/anim/signal";
 import { formatShort } from "@/lib/format";
 import type { Commit, CommitType, RepoMeta } from "@/lib/commits";
+import { GitGraphBanner } from "@/components/depth/GitGraphBanner";
 
 // ── Commit type display ─────────────────────────────────────
 const TYPE: Record<CommitType, { label: string; cls: string }> = {
@@ -452,12 +453,14 @@ export function CommitTimeline({
   live = false,
   repoMeta,
   technologies = [],
+  accent,
 }: {
   commits: Commit[];
   repo: string;
   live?: boolean;
   repoMeta?: RepoMeta | null;
   technologies?: string[];
+  accent?: string;
 }) {
   const root      = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -534,49 +537,72 @@ export function CommitTimeline({
 
   return (
     <div ref={root} className="flex min-h-full flex-col">
-      {/* Fixed header */}
-      <header className="sticky top-0 z-10 border-b border-line bg-bg/85 px-5 py-4 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 font-mono text-xs text-ink-muted">
-            <GitHubMark className="h-4 w-4" />
-            {repo}
-          </span>
-          {live ? (
-            <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[0.6rem] uppercase tracking-wide text-accent">
-              GitHub
-            </span>
-          ) : (
-            <span className="rounded-full border border-line px-2 py-0.5 text-[0.6rem] uppercase tracking-wide text-ink-faint">
-              placeholder
-            </span>
-          )}
-        </div>
-        <h2 className="mt-3 text-lg font-semibold text-ink">Commits</h2>
-        <p className="text-xs text-ink-faint">
-          {live ? "histórico real · GitHub API" : "derivado das semanas"}
-        </p>
-
-        {/* Branch / PR indicators */}
-        {repoMeta && live && (
-          <div className="mt-2.5 flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-ink-faint">
-              <BranchIcon className="h-3.5 w-3.5 shrink-0" />
-              <span className="font-medium text-ink-muted">{repoMeta.branches}</span>
-              {repoMeta.branches === 1 ? "branch" : "branches"}
-            </span>
-            <span className="h-3 w-px bg-line" aria-hidden />
-            <span className="flex items-center gap-1.5 text-xs text-ink-faint">
-              <PullRequestIcon className="h-3.5 w-3.5 shrink-0" />
-              <span className="font-medium text-ink-muted">{repoMeta.prs}</span>
-              {repoMeta.prs === 1 ? "PR" : "PRs"}
-            </span>
-            <span className="h-3 w-px bg-line" aria-hidden />
-            <span className="font-mono text-[0.6rem] text-ink-faint">
-              {repoMeta.totalCommits} commits total
-            </span>
+      {/* Pinned head: scroll-synced git strip + commits header */}
+      <div className="sticky top-0 z-20">
+        {commits.length > 0 && (
+          <div className="hidden border-b border-line bg-bg px-5 pb-3 pt-3 lg:block">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="font-mono text-[0.6rem] uppercase tracking-widest text-ink-faint">
+                Git Tree
+              </span>
+              <span className="ml-auto font-mono text-[0.6rem] text-ink-faint">
+                {repoMeta?.totalCommits ?? commits.length} commits
+                {repoMeta?.branches
+                  ? ` · ${repoMeta.branches} ${repoMeta.branches === 1 ? "branch" : "branches"}`
+                  : ""}
+              </span>
+            </div>
+            <GitGraphBanner
+              scrollSync
+              total={repoMeta?.totalCommits ?? commits.length}
+              accent={accent}
+              commitTypes={commits.map((c) => c.type)}
+            />
           </div>
         )}
-      </header>
+        <header className="border-b border-line bg-bg/85 px-5 py-4 backdrop-blur">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 font-mono text-xs text-ink-muted">
+              <GitHubMark className="h-4 w-4" />
+              {repo}
+            </span>
+            {live ? (
+              <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[0.6rem] uppercase tracking-wide text-accent">
+                GitHub
+              </span>
+            ) : (
+              <span className="rounded-full border border-line px-2 py-0.5 text-[0.6rem] uppercase tracking-wide text-ink-faint">
+                placeholder
+              </span>
+            )}
+          </div>
+          <h2 className="mt-3 text-lg font-semibold text-ink">Commits</h2>
+          <p className="text-xs text-ink-faint">
+            {live ? "histórico real · GitHub API" : "derivado das semanas"}
+          </p>
+
+          {/* Branch / PR indicators */}
+          {repoMeta && live && (
+            <div className="mt-2.5 flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-xs text-ink-faint">
+                <BranchIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium text-ink-muted">{repoMeta.branches}</span>
+                {repoMeta.branches === 1 ? "branch" : "branches"}
+              </span>
+              <span className="h-3 w-px bg-line" aria-hidden />
+              <span className="flex items-center gap-1.5 text-xs text-ink-faint">
+                <PullRequestIcon className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium text-ink-muted">{repoMeta.prs}</span>
+                {repoMeta.prs === 1 ? "PR" : "PRs"}
+              </span>
+              <span className="h-3 w-px bg-line" aria-hidden />
+              <span className="font-mono text-[0.6rem] text-ink-faint">
+                {repoMeta.totalCommits} commits total
+              </span>
+            </div>
+          )}
+        </header>
+      </div>
 
       {/* Scrollable feed */}
       <div className="relative flex-1 px-5 py-6">

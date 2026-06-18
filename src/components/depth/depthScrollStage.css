@@ -13,6 +13,13 @@
   isolation: isolate;
   background: #07070d;
   contain: layout paint;
+  /* How long each card stays visible before neighbours overlap.
+     A card holds full opacity while |rel| < --fade-start, then fades to 0
+     by --fade-end. Keep them symmetric around 0.5 (start + end = 1) so the
+     crossfade between two cards sums to 1 — clean, constant-brightness handoff.
+     Widen the gap toward 0.5/0.5 (e.g. 0.42/0.58) for an even later, sharper swap. */
+  --fade-start: 0.35;
+  --fade-end: 0.65;
 }
 
 .depth-layer {
@@ -30,11 +37,24 @@
       calc(var(--depth-pointer-x, 0) * 22px),
       calc(var(--depth-pointer-y, 0) * 14px)
     );
-  /* crossfade: only layers within ±1 of focus are visible */
-  opacity: calc(1 - min(var(--abs-rel), 1));
+  /* crossfade with a dwell plateau: full opacity while |rel| < --fade-start,
+     fading to 0 by --fade-end. Only the narrow start..end band overlaps, so
+     the focused card stays clear far longer before its neighbour appears. */
+  opacity: clamp(
+    0,
+    calc((var(--fade-end) - var(--abs-rel)) / (var(--fade-end) - var(--fade-start))),
+    1
+  );
   will-change: transform, opacity;
   backface-visibility: hidden;
   contain: layout paint;
+  /* inactive layers must not intercept pointer events — they stack on top
+     in DOM order even when visually behind the active layer */
+  pointer-events: none;
+}
+
+.depth-layer[data-active='true'] {
+  pointer-events: auto;
 }
 
 /* velocity → subtle atmosphere overlay (plain alpha, cheap to composite) */
@@ -49,6 +69,37 @@
 }
 
 /* ================================================
+   Brutalist project card — the whole card is the link.
+   The CTA's stretched ::after (after:absolute after:inset-0)
+   covers this article, so a hover/click anywhere hits the link.
+   ================================================ */
+
+.depth-card {
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 8px 8px 0 0 var(--accent, #3c72c6);
+  /* snappy feedback — short, transform-led transition */
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+/* lift toward the shadow on hover or keyboard focus —
+   only the active layer reacts (others have pointer-events: none) */
+.depth-layer[data-active='true'] .depth-card:hover,
+.depth-card:focus-within {
+  transform: translate(-3px, -3px);
+  box-shadow: 11px 11px 0 0 var(--accent, #3c72c6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-card {
+    transition: none;
+  }
+  .depth-layer[data-active='true'] .depth-card:hover,
+  .depth-card:focus-within {
+    transform: none;
+  }
+}
+
+/* ================================================
    Fixed nav — timeline + specs overlay
    ================================================ */
 
@@ -57,7 +108,7 @@
   top: 4rem; /* below sticky site header (h-16) */
   right: 0;
   bottom: 0;
-  width: 17rem;
+  width: 20rem;
   display: flex;
   flex-direction: column;
   padding: 1.5rem 1.25rem;
@@ -82,12 +133,208 @@
   flex: 0 0 auto;
 }
 
-.depth-nav-specs {
-  flex: 1 1 auto;
+.depth-nav-foot {
+  flex: 0 0 auto;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 1.25rem;
-  margin-top: 1.25rem;
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ================================================
+   Git Tree — scroll-synced SVG graph (below timeline)
+   Driven by the inherited `--p` (0→1) progress var;
+   all animation is transform / opacity / dashoffset.
+   ================================================ */
+
+.depth-nav-graph {
+  flex: 1 1 auto;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.depth-nav-graph-head {
+  flex: 0 0 auto;
+}
+
+.depth-nav-label {
+  margin-bottom: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.git-graph-caption {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.git-graph-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  flex: 0 0 auto;
+}
+
+.git-graph-cap-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.git-graph-cap-meta {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-family: ui-monospace, monospace;
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+}
+
+/* Git tree overlay — wide banner pinned top-right, just left of the nav.
+   Hidden below xl: there isn't room beside the project card on narrow screens. */
+.depth-tree-overlay {
+  position: fixed;
+  top: 4.5rem;
+  right: 20.5rem;
+  width: clamp(20rem, 26vw, 32rem);
+  z-index: 30;
+  pointer-events: none;
+  display: none;
+}
+
+.depth-tree-overlay-head {
+  margin-bottom: 0.4rem;
+}
+
+@media (min-width: 1280px) {
+  .depth-tree-overlay {
+    display: block;
+  }
+}
+
+.git-graph-holder {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0.75rem;
+  overflow: hidden;
+}
+
+.git-graph {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Trunk: dim base + bright copy revealed top→down by --p */
+.git-graph .trunk-base {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 2;
+}
+
+.git-graph .trunk-live {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: clamp(0, calc(1 - (var(--p, 0) - var(--mst, 0)) / var(--mden, 1)), 1);
+}
+
+/* In-progress tail — dashed continuation past the last project */
+.git-graph .spine-tail {
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 3 4;
+  opacity: clamp(0, calc((var(--p, 0) - var(--t, 0)) * 10 + 1), 1);
+}
+
+/* Horizontal project branch — ramifies off the main, draws across the
+   project's window [--ba, --ba + --bs] */
+.git-graph .branch {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+  stroke-dasharray: 1;
+  stroke-dashoffset: clamp(0, calc(1 - (var(--p, 0) - var(--ba, 0)) / var(--bs, 1)), 1);
+}
+
+/* Real extra branches — short parallel sub-branches below the main rib */
+.git-graph .branch-sub {
+  fill: none;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.45;
+  stroke-dasharray: 1;
+  stroke-dashoffset: clamp(0, calc(1 - (var(--p, 0) - var(--ba, 0)) / var(--bs, 1)), 1);
+}
+
+/* Commit dots + project nodes pop in when the playhead reaches them (--t) */
+.git-graph .node,
+.git-graph .dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: clamp(0.12, calc((var(--p, 0) - var(--t, 0)) * 18 + 1), 1);
+  transform: scale(clamp(0.35, calc((var(--p, 0) - var(--t, 0)) * 14 + 1), 1));
+}
+
+.git-graph .node {
+  fill: #07070d;
+  stroke-width: 2;
+}
+
+.git-graph .dot {
+  stroke: #07070d;
+  stroke-width: 0.75;
+}
+
+.git-graph .git-branch[data-active] .branch {
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.git-graph .git-branch[data-active] .node {
+  stroke-width: 2.6;
+}
+
+/* Playhead / HEAD — rides the diagonal spine with --p (X + Y) */
+.git-graph .git-head {
+  transform: translate(
+    calc(var(--hx0, 0px) + var(--p, 0) * var(--hxK, 0px)),
+    calc(var(--hy0, 0px) + var(--p, 0) * var(--hyK, 0px))
+  );
+}
+
+.git-graph .git-head-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1.6;
+}
+
+.git-graph .git-head-core {
+  fill: #fff;
+}
+
+.git-graph .git-head-tick {
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
 }
 
 /* hide detailed nav on small screens — touch swipe still works */
@@ -109,6 +356,23 @@
     visibility: hidden;
   }
   .depth-stage::after {
+    display: none;
+  }
+  /* git tree: reveal fully, drop the traveling playhead */
+  .git-graph .trunk-live,
+  .git-graph .branch,
+  .git-graph .branch-sub {
+    stroke-dashoffset: 0;
+  }
+  .git-graph .spine-tail {
+    opacity: 0.6;
+  }
+  .git-graph .node,
+  .git-graph .dot {
+    opacity: 1;
+    transform: none;
+  }
+  .git-graph .git-head {
     display: none;
   }
 }
