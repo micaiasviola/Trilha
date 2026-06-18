@@ -1,11 +1,13 @@
-import Link from "next/link";
+"use client";
 
-const NAV = [
-  { href: "/linha-do-tempo", label: "Linha do tempo" },
-  { href: "/projetos", label: "Projetos" },
-];
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const NAV = [{ href: "/", label: "Home" }];
 
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header
       data-site-header
@@ -21,15 +23,26 @@ export function Header() {
           </span>
         </Link>
         <nav className="flex items-center gap-1">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:bg-bg-soft hover:text-ink"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            const active =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                  active
+                    ? "bg-bg-soft font-medium text-ink"
+                    : "text-ink-muted hover:bg-bg-soft hover:text-ink"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>
