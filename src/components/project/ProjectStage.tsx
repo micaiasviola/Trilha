@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { gsap, useGSAP, EASE } from "@/lib/anim/gsap";
 import { onIntroReady, prefersReducedMotion } from "@/lib/anim/signal";
 import { Words } from "@/components/anim/SplitWords";
@@ -29,6 +29,8 @@ export function ProjectStage({
   stats: StageStats;
 }) {
   const root = useRef<HTMLDivElement>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
+  const towerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
@@ -68,39 +70,134 @@ export function ProjectStage({
     { scope: root },
   );
 
+  // Torre (canvas) sobre o pôster, ambos escondendo/revelando sob o cursor:
+  // buraco na torre + SVG revelado no mesmo ponto. O pôster scrolla e a torre é
+  // sticky, então os vars de máscara são recalculados por elemento a cada frame.
+  useEffect(() => {
+    const poster = posterRef.current;
+    const tower = towerRef.current;
+    const stage = root.current;
+    if (!tower || !stage) return;
+
+    // Sem hover (touch) ou movimento reduzido: torre cobre, SVG escondido.
+    if (!window.matchMedia("(hover: hover)").matches || prefersReducedMotion()) {
+      tower.style.setProperty("--r", "0px");
+      poster?.style.setProperty("--r", "0px");
+      return;
+    }
+
+    const REVEAL = 230;
+    const cur = { x: 0, y: 0, r: 0 }; // cursor suavizado (viewport) + raio
+    const tgt = { x: 0, y: 0, r: 0 }; // cursor alvo (viewport) + raio
+    let raf = 0;
+    let primed = false;
+
+    // Posiciona a máscara no espaço local do elemento (lida com scroll/sticky).
+    const apply = (el: HTMLElement) => {
+      const rect = el.getBoundingClientRect();
+      el.style.setProperty("--mx", `${(cur.x - rect.left).toFixed(1)}px`);
+      el.style.setProperty("--my", `${(cur.y - rect.top).toFixed(1)}px`);
+      el.style.setProperty("--r", `${cur.r.toFixed(1)}px`);
+    };
+
+    const render = () => {
+      cur.x += (tgt.x - cur.x) * 0.16;
+      cur.y += (tgt.y - cur.y) * 0.16;
+      cur.r += (tgt.r - cur.r) * 0.1;
+      apply(tower);
+      if (poster) apply(poster);
+      const done =
+        Math.abs(tgt.x - cur.x) < 0.5 &&
+        Math.abs(tgt.y - cur.y) < 0.5 &&
+        Math.abs(tgt.r - cur.r) < 0.5;
+      raf = done ? 0 : requestAnimationFrame(render);
+    };
+    const wake = () => {
+      if (!raf) raf = requestAnimationFrame(render);
+    };
+
+    const onMove = (e: PointerEvent) => {
+      tgt.x = e.clientX;
+      tgt.y = e.clientY;
+      tgt.r = REVEAL;
+      if (!primed) {
+        cur.x = tgt.x; // snap inicial: evita varredura a partir do canto
+        cur.y = tgt.y;
+        primed = true;
+      }
+      wake();
+    };
+    const onLeave = () => {
+      tgt.r = 0;
+      wake();
+    };
+
+    stage.addEventListener("pointermove", onMove);
+    stage.addEventListener("pointerleave", onLeave);
+    return () => {
+      stage.removeEventListener("pointermove", onMove);
+      stage.removeEventListener("pointerleave", onLeave);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [project.posterBg]);
+
   const number = String(index + 1).padStart(2, "0");
 
   return (
     <div ref={root} className="relative">
       {/* Fundo da atração */}
-      {project.slug === "ecqua-360" ? (
-        /* ECQUA-360: pôster vetorizado repetido + torre wireframe por cima */
+      {project.posterBg ? (
+        /* Atração com pôster (campo posterBg): SVG repetido + torre à esquerda */
         <>
           {/* Camada 1 — pôster repetido até o fim da página */}
           <div
+            ref={posterRef}
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] opacity-80 lg:block"
-            style={{
-              backgroundImage: "url(/ecqua-360-bg.svg)",
-              backgroundRepeat: "repeat-y",
-              backgroundSize: "100% auto",
-            }}
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] opacity-90 lg:block"
+            style={
+              {
+                backgroundImage: `url(${project.posterBg})`,
+                backgroundRepeat: "repeat-y",
+                backgroundSize: "100% auto",
+                "--mx": "50%",
+                "--my": "50%",
+                "--r": "0px",
+                WebkitMaskImage:
+                  "radial-gradient(circle var(--r) at var(--mx) var(--my), #000 0%, #000 30%, transparent 70%)",
+                maskImage:
+                  "radial-gradient(circle var(--r) at var(--mx) var(--my), #000 0%, #000 30%, transparent 70%)",
+              } as CSSProperties
+            }
           />
           {/* Camada 2 — fade de legibilidade sobre o texto */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] bg-gradient-to-r from-bg via-bg/40 to-transparent lg:block"
           />
-          {/* Camada 3 — torre wireframe (sticky) à esquerda, atrás da descrição */}
+          {/* Camada 3 — torre wireframe (sticky) SOBRE o pôster; o cursor abre
+              um buraco que revela o SVG. Sticky = sempre cobre o pôster ao rolar. */}
           <div
             aria-hidden
             className="pointer-events-none sticky top-0 hidden h-[calc(100svh-4rem)] lg:block"
             style={{ marginBottom: "calc(-1 * (100svh - 4rem))" }}
           >
-            <GenerativeCanvas
-              seed={project.slug}
-              className="absolute left-0 top-0 h-full w-[54%]"
-            />
+            <div
+              ref={towerRef}
+              className="absolute right-0 top-0 h-full w-[54%]"
+              style={
+                {
+                  "--mx": "50%",
+                  "--my": "50%",
+                  "--r": "0px",
+                  WebkitMaskImage:
+                    "radial-gradient(circle var(--r) at var(--mx) var(--my), transparent 0%, transparent 30%, #000 70%)",
+                  maskImage:
+                    "radial-gradient(circle var(--r) at var(--mx) var(--my), transparent 0%, transparent 30%, #000 70%)",
+                } as CSSProperties
+              }
+            >
+              <GenerativeCanvas seed={project.slug} className="h-full w-full" />
+            </div>
           </div>
         </>
       ) : (
@@ -124,7 +221,7 @@ export function ProjectStage({
         <div data-stage-fade className="flex items-center justify-between">
           <Magnetic strength={0.25}>
             <Link
-              href="/projetos"
+              href={`/?projeto=${project.slug}`}
               className="inline-flex items-center gap-2 text-sm text-ink-muted transition-colors hover:text-ink"
             >
               ← todas as atrações

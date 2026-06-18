@@ -78,14 +78,14 @@ até o fim da página, fade de legibilidade e (opcional) a **torre** (`Generativ
 por cima:
 
 ```tsx
-{project.slug === "<slug>" ? (
+{project.posterBg ? (   // campo opcional `posterBg` no Project/JSON = caminho do SVG em /public
   <>
     {/* 1 — pôster repetido até o fim da página */}
     <div
       aria-hidden
       className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] opacity-70 lg:block"
       style={{
-        backgroundImage: "url(/<slug>-bg.svg)",
+        backgroundImage: `url(${project.posterBg})`,
         backgroundRepeat: "repeat-y",
         backgroundSize: "100% auto",
       }}
@@ -131,8 +131,7 @@ Confirme também `npx tsc --noEmit` após editar o componente.
 
 ## Replicar em outras atrações
 - Rode o builder de novo com outro `SLUG`/COMPOSIÇÃO → `public/<outro-slug>-bg.svg`.
-- Adicione outro ramo no `ProjectStage` (ou, para escalar, troque o `===` por um
-  **registro** de slugs com pôster, ou um campo `posterBg?: string` no `Project`/JSON
-  e renderize condicionalmente).
+- O `ProjectStage` já ramifica pelo campo **`posterBg`** do `Project`/JSON: basta
+  setar `"posterBg": "/<slug>-bg.svg"` no JSON da atração e pôr o SVG em `/public`.
 - Mantenha 1 cor (a `ink` do tema) — fundo transparente, sem `<script>`/`<style>`,
   para o SVG ficar leve e portátil (inclusive em READMEs via `<img>`).
