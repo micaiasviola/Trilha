@@ -56,7 +56,10 @@ export async function getProjectCommits(
       break;
     }
 
-    if (!res.ok) break;
+    if (!res.ok) {
+      console.error(`[commits] ${githubRepo} → HTTP ${res.status}`, await res.text());
+      break;
+    }
 
     const data = (await res.json()) as Array<{
       sha: string;
