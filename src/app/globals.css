@@ -35,38 +35,6 @@
   }
 }
 
-/* ── Atrações: troca carrossel (default/mobile/reduced) ↔ pinned (GSAP) ── */
-[data-attractions] .at-track {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-[data-attractions] .at-track::-webkit-scrollbar {
-  display: none;
-}
-/* Modo pinned (ativado por JS só em desktop + motion permitido) */
-[data-attractions][data-mode="pinned"] {
-  height: 100vh;
-  overflow: hidden;
-}
-[data-attractions][data-mode="pinned"] .at-track {
-  overflow: visible;
-  scroll-snap-type: none;
-  height: 100%;
-  align-items: center;
-  will-change: transform;
-}
-/* A trilha só aparece no modo pinned */
-[data-attractions] .at-rail {
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-[data-attractions][data-mode="pinned"] .at-rail {
-  opacity: 1;
-}
-
 /* Scrollbar fina para painéis com scroll interno */
 .scroll-slim {
   scrollbar-width: thin;
