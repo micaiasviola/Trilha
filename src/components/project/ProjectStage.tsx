@@ -161,7 +161,7 @@ export function ProjectStage({
         {project.highlights.length > 0 && (
           <div data-stage-fade className="mt-10">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
-              ✨ Destaques
+              Destaques
             </h2>
             <ul className="mt-4 space-y-2">
               {project.highlights.map((h, i) => (
@@ -177,7 +177,7 @@ export function ProjectStage({
         {weeks.length > 0 && (
           <div data-stage-fade className="mt-10">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-faint">
-              🗓️ Semanas nesta atração
+              Semanas nesta atração
             </h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {weeks.map((w) => (

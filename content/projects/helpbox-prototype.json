@@ -1,0 +1,16 @@
+{
+  "slug": "helpbox-prototype",
+  "name": "HelpBox",
+  "tagline": "Helpdesk de ciclo completo — da abertura do chamado à resolução com histórico.",
+  "description": "Protótipo de sistema de helpdesk desenvolvido em equipe durante a faculdade. O objetivo principal era praticar desenvolvimento colaborativo real: branches por feature, pull requests com code review e integração contínua. O sistema cobre o ciclo completo de um chamado — abertura pelo usuário, triagem, atribuição a um técnico e resolução com comentários de acompanhamento. Cada decisão de arquitetura foi discutida em equipe, o que trouxe perspectiva sobre como escalar um produto de suporte para uso interno real.",
+  "status": "shipped",
+  "role": "Full-Stack Dev",
+  "startDate": "2025-10-01",
+  "technologies": ["JavaScript", "Node.js", "HTML", "CSS"],
+  "highlights": [
+    "Ciclo de vida completo do chamado: abertura → triagem → atribuição → resolução com comentários",
+    "Autenticação com perfis distintos para usuário final e técnico de suporte",
+    "Desenvolvimento colaborativo com branches por feature, PRs e code review em equipe"
+  ],
+  "githubRepo": "helpbox-prototype"
+}

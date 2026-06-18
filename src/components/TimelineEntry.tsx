@@ -36,9 +36,18 @@ export function TimelineEntry({ week }: { week: Week }) {
         </div>
 
         <div className="mt-3 flex gap-4 text-xs text-ink-faint">
-          <span>📦 {week.deliveries.length} entregas</span>
-          <span>🧭 {week.decisions.length} decisões</span>
-          <span>⚡ {week.challenges.length} desafios</span>
+          <span>
+            <span className="font-medium text-accent">{week.deliveries.length}</span>
+            {" "}entregas
+          </span>
+          <span>
+            <span className="font-medium text-accent-cyan">{week.decisions.length}</span>
+            {" "}decisões
+          </span>
+          <span>
+            <span className="font-medium text-ink-muted">{week.challenges.length}</span>
+            {" "}desafios
+          </span>
         </div>
       </Link>
     </article>

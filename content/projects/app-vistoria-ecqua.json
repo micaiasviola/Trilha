@@ -1,0 +1,16 @@
+{
+  "slug": "app-vistoria-ecqua",
+  "name": "App Vistoria ECQUA",
+  "tagline": "Vistorias prediais em campo — formulário padronizado e upload seguro direto da câmera.",
+  "description": "Aplicativo mobile para os engenheiros da ECQUA registrarem vistorias prediais em campo. Antes, o fluxo era papel ou fotos avulsas no WhatsApp — sem padrão, sem rastreabilidade. O app padroniza o formulário de inspeção por tipo de edificação, captura fotos diretamente e envia tudo via proxy no Google Cloud Run que gera presigned URLs para o bucket de armazenamento. As credenciais nunca chegam ao app. O CI/CD via GitHub Actions elimina o deploy manual: push na main dispara a atualização automática no Cloud Run.",
+  "status": "in-progress",
+  "role": "Full-Stack Dev",
+  "startDate": "2026-02-06",
+  "technologies": ["JavaScript", "React Native", "Supabase", "Google Cloud Run", "Python"],
+  "highlights": [
+    "Proxy de upload seguro: o app recebe apenas a URL assinada, nunca toca nas credenciais do bucket",
+    "Formulário padronizado por tipo de edificação — reduz erros de preenchimento em campo",
+    "CI/CD via GitHub Actions: push na main dispara deploy automático no Cloud Run sem intervenção"
+  ],
+  "githubRepo": "AppVistoriaEcqua"
+}

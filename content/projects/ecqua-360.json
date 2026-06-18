@@ -1,0 +1,16 @@
+{
+  "slug": "ecqua-360",
+  "name": "ECQUA 360",
+  "tagline": "CRM comercial com Kanban de leads e versionamento contínuo de propostas comerciais.",
+  "description": "Sistema comercial interno que desenvolvo para a ECQUA gerenciar o funil de vendas de ponta a ponta. Antes, leads se perdiam no e-mail e propostas não tinham histórico de versão. A solução foi um Kanban com atualização de status idempotente via PLpgSQL — arrastar um card não duplica estado. Cada proposta gera uma nova versão rastreável automaticamente. O front é Next.js com Supabase como backend, usando RLS para isolamento por usuário e preloader com skeleton screens para uma UX percebida como mais rápida mesmo em conexões lentas.",
+  "status": "in-progress",
+  "role": "Tech PM & Full-Stack Dev",
+  "startDate": "2026-05-27",
+  "technologies": ["Next.js", "TypeScript", "Supabase", "PostgreSQL", "Tailwind CSS"],
+  "highlights": [
+    "Kanban de leads com drag-and-drop e atualização idempotente via PLpgSQL — sem estado duplicado",
+    "Versionamento contínuo de propostas: cada mudança gera uma nova versão rastreável no banco",
+    "Preloader + skeleton screens — UX percebida como rápida mesmo em conexões lentas"
+  ],
+  "githubRepo": "ECQUA-360"
+}

@@ -37,5 +37,6 @@ export interface Project {
   startDate: string;
   technologies: string[];
   highlights: string[];
+  githubRepo?: string;
   placeholder?: boolean;
 }

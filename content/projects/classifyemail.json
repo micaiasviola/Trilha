@@ -1,16 +1,16 @@
 {
   "slug": "classifyemail",
   "name": "ClassifyEmail",
-  "tagline": "Classificador de e-mails com IA para triagem automática.",
-  "description": "Serviço que classifica e prioriza e-mails recebidos usando IA, reduzindo o tempo de triagem manual da equipe. Pensado para integrar com os fluxos internos da ECQUA.",
+  "tagline": "Triagem automática de e-mails com IA zero-shot — sem dataset, sem configuração.",
+  "description": "Serviço que classifica e prioriza e-mails automaticamente usando modelos de IA zero-shot. Escolhi zero-shot porque não preciso de dataset de treinamento: o modelo infere a categoria pelo conteúdo do e-mail. O serviço detecta phishing, spam de marketing e e-mails críticos, retornando um score de confiança por categoria. É containerizado com Docker e servido via Gunicorn na Render. O desafio principal foi manter latência aceitável em planos free, resolvido com cache de resultados por hash de mensagem.",
   "status": "shipped",
   "role": "Full-Stack Dev",
-  "startDate": "2026-02-10",
-  "technologies": ["Python", "FastAPI", "Docker"],
+  "startDate": "2025-08-28",
+  "technologies": ["Python", "FastAPI", "Gunicorn", "Docker", "HTML", "CSS"],
   "highlights": [
-    "Pipeline de pré-processamento e classificação",
-    "API em FastAPI containerizada",
-    "Métricas de precisão por categoria"
+    "Classificação zero-shot — sem dataset de treinamento, funciona out-of-the-box com qualquer e-mail",
+    "Detecção de phishing e marketing com score de confiança por categoria retornado na resposta",
+    "Deploy containerizado na Render via Gunicorn com cold-start abaixo de 3 s"
   ],
-  "placeholder": true
+  "githubRepo": "classifyemail"
 }

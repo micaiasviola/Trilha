@@ -33,7 +33,9 @@ export default async function ProjectPage({
   if (!project) notFound();
 
   const weeks = getWeeksForProject(slug);
-  const commits = getProjectCommits(slug);
+  const commits = project.githubRepo
+    ? await getProjectCommits(project.githubRepo, project.startDate)
+    : [];
   const index = getAllProjects().findIndex((p) => p.slug === slug);
 
   const stats = {
@@ -70,7 +72,12 @@ export default async function ProjectPage({
         className="relative min-h-0 border-t border-line lg:overflow-y-auto lg:border-l lg:border-t-0 scroll-slim"
         aria-label="Linha do tempo de commits"
       >
-        <CommitTimeline commits={commits} repo={`micaiasviola/${slug}`} />
+        <CommitTimeline
+          commits={commits}
+          repo={project.githubRepo ? `micaiasviola/${project.githubRepo}` : `micaiasviola/${slug}`}
+          live={!!project.githubRepo}
+          technologies={project.technologies}
+        />
       </aside>
     </div>
   );

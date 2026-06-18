@@ -4,7 +4,7 @@
   "startDate": "2026-05-25",
   "endDate": "2026-05-31",
   "title": "Fundando o modelo de dados do ERP",
-  "summary": "Semana de modelagem: defini o esquema central do ERP de Obras e como isolar dados por obra com segurança.",
+  "summary": "Fui do zero ao esquema central do ERP — modelei entidades, defini relações e criei as primeiras políticas de RLS que isolam dados por obra direto no banco, sem depender do app.",
   "projects": ["erp-obras"],
   "technologies": ["Supabase", "PostgreSQL", "TypeScript"],
   "deliveries": [

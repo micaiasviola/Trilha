@@ -1,16 +1,16 @@
 {
   "slug": "erp-obras",
   "name": "ERP de Obras",
-  "tagline": "Centralizar orçamento, medições e diário de obra em um só lugar.",
-  "description": "ERP interno da ECQUA para gestão de obras de engenharia: controle de orçamento, medições, diário de obra e indicadores. Substitui planilhas espalhadas por um fluxo único e auditável.",
+  "tagline": "Do caos das planilhas ao controle total de obras — orçamento, medições e histórico em um fluxo único.",
+  "description": "Construo internamente na ECQUA um ERP para gestão de obras de engenharia civil. O problema era real: cada obra vivia em planilhas isoladas sem padrão, tornando impossível consolidar orçamentos, acompanhar medições e auditar pagamentos em escala. O ERP centraliza tudo — cadastro de obra, importação de orçamentos por planilha, medições versionadas com append-only e dashboard de pendências. Escolhi Google Apps Script e Google Sheets como plataforma porque é o ambiente já adotado pela ECQUA, eliminando a curva de aprendizado da equipe.",
   "status": "in-progress",
   "role": "Tech PM & Full-Stack Dev",
   "startDate": "2026-01-06",
-  "technologies": ["Next.js", "TypeScript", "Supabase", "PostgreSQL", "Tailwind CSS"],
+  "technologies": ["JavaScript", "Google Apps Script", "Google Sheets", "HTML", "CSS"],
   "highlights": [
-    "Modelagem do banco com Row Level Security por obra",
-    "Importação de planilhas legadas de orçamento",
-    "Dashboard de medições em tempo real"
+    "Agentes de IA (GitHub Copilot) para automação de lançamentos repetitivos no fluxo de obras",
+    "Controle de pagamentos a prestadores com validação por aba e bloqueio de duplicidade",
+    "Dashboard de pendências com atualização integrada ao menu — sem reload de página"
   ],
-  "placeholder": true
+  "githubRepo": "PLANILHA-OBRAS-GERAL"
 }

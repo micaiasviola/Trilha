@@ -4,7 +4,7 @@
   "startDate": "2026-06-01",
   "endDate": "2026-06-07",
   "title": "Importando o legado de planilhas",
-  "summary": "Construí o importador que traz orçamentos antigos das planilhas para o ERP sem perder rastreabilidade.",
+  "summary": "O maior risco de uma migração é importar dado ruim sem perceber. Resolvi isso construindo um importador com etapa de pré-visualização obrigatória: o usuário confirma o diff antes de qualquer gravação.",
   "projects": ["erp-obras"],
   "technologies": ["Next.js", "TypeScript", "Supabase"],
   "deliveries": [

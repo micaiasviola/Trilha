@@ -4,7 +4,7 @@
   "startDate": "2026-06-08",
   "endDate": "2026-06-14",
   "title": "Dashboard de medições em tempo real",
-  "summary": "Entreguei o painel que mostra o avanço das medições por obra, com atualização ao vivo.",
+  "summary": "Finalizei o dashboard de medições com atualização em tempo real — sem polling, direto pelo canal Realtime do Supabase, com memoização para manter a UI fluida mesmo com eventos frequentes.",
   "projects": ["erp-obras", "classifyemail"],
   "technologies": ["Next.js", "Supabase", "Tailwind CSS"],
   "deliveries": [
