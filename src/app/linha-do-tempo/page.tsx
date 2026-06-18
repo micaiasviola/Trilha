@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAllProjects } from "@/lib/content";
+import { getAllProjectsWithGitHub } from "@/lib/content";
 import { StatusBadge, TechBadge } from "@/components/Badge";
 import { STATUS_LABEL, formatLong } from "@/lib/format";
 import { SplitWords } from "@/components/anim/SplitWords";
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   title: "Linha do tempo — Trilhado Desenvolvimento",
 };
 
-export default function TimelinePage() {
-  const projects = getAllProjects();
+export default async function TimelinePage() {
+  const projects = await getAllProjectsWithGitHub();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">

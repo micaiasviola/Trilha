@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, type ReactNode } from "react";
 import { gsap, useGSAP, EASE } from "@/lib/anim/gsap";
 import { onIntroReady, prefersReducedMotion } from "@/lib/anim/signal";
 import { formatShort } from "@/lib/format";
-import type { Commit, CommitType } from "@/lib/commits";
+import type { Commit, CommitType, RepoMeta } from "@/lib/commits";
 
 // ── Commit type display ─────────────────────────────────────
 const TYPE: Record<CommitType, { label: string; cls: string }> = {
@@ -450,11 +450,13 @@ export function CommitTimeline({
   commits,
   repo,
   live = false,
+  repoMeta,
   technologies = [],
 }: {
   commits: Commit[];
   repo: string;
   live?: boolean;
+  repoMeta?: RepoMeta | null;
   technologies?: string[];
 }) {
   const root      = useRef<HTMLDivElement>(null);
@@ -553,6 +555,27 @@ export function CommitTimeline({
         <p className="text-xs text-ink-faint">
           {live ? "histórico real · GitHub API" : "derivado das semanas"}
         </p>
+
+        {/* Branch / PR indicators */}
+        {repoMeta && live && (
+          <div className="mt-2.5 flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs text-ink-faint">
+              <BranchIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="font-medium text-ink-muted">{repoMeta.branches}</span>
+              {repoMeta.branches === 1 ? "branch" : "branches"}
+            </span>
+            <span className="h-3 w-px bg-line" aria-hidden />
+            <span className="flex items-center gap-1.5 text-xs text-ink-faint">
+              <PullRequestIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="font-medium text-ink-muted">{repoMeta.prs}</span>
+              {repoMeta.prs === 1 ? "PR" : "PRs"}
+            </span>
+            <span className="h-3 w-px bg-line" aria-hidden />
+            <span className="font-mono text-[0.6rem] text-ink-faint">
+              {repoMeta.totalCommits} commits total
+            </span>
+          </div>
+        )}
       </header>
 
       {/* Scrollable feed */}
@@ -696,6 +719,31 @@ export function CommitTimeline({
         )}
       </div>
     </div>
+  );
+}
+
+function BranchIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden className={className}>
+      <circle cx="4" cy="3.5" r="1.5" fill="currentColor"/>
+      <circle cx="4" cy="12.5" r="1.5" fill="currentColor"/>
+      <circle cx="12" cy="3.5" r="1.5" fill="currentColor"/>
+      <line x1="4" y1="5" x2="4" y2="11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M4 5.5 Q4 8.5 12 5.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function PullRequestIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden className={className}>
+      <circle cx="4"  cy="3.5" r="1.5" fill="currentColor"/>
+      <circle cx="4"  cy="12.5" r="1.5" fill="currentColor"/>
+      <circle cx="12" cy="8"   r="1.5" fill="currentColor"/>
+      <line x1="4" y1="5" x2="4" y2="11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M4 5.5 Q4 8 10.5 8" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+      <polyline points="9,6 11.5,8 9,10" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
   );
 }
 
