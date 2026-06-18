@@ -1,0 +1,97 @@
+/* ================================================
+   Generative horizontal git-graph banner (tree).
+   Two reveal modes, both pure CSS:
+     • default    — plays once on mount (time-based, per-element `--d`).
+     • .is-scroll — reveals with scroll progress `--p` (0→1): each line over a
+                    `--bstart`/`--blen` window, each dot/star past `--t`.
+   The trunk + branches "draw" via stroke-dashoffset; dots/stars "pop"
+   (scale + opacity). Mirrors the technique in gitStrip.css.
+   ================================================ */
+
+.gg-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Lines: trunk + branches drawing themselves */
+.gg-banner .gg-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: gg-banner-draw var(--dur, 1s) ease-out var(--d, 0s) both;
+}
+
+/* Dots + stars popping in */
+.gg-banner .gg-pop {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gg-banner-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0s) both;
+}
+
+@keyframes gg-banner-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes gg-banner-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Scroll-synced mode (rewind) ─────────────────────────────
+   The tree starts 100% drawn; as `--p` (0→1) grows with scroll into OLDER
+   commits, a mask hides it from RIGHT (newest) to LEFT (oldest) — the feed runs
+   newest→oldest, so scrolling reads as "rewinding" through time. `--p` is
+   written from the scroll position once per rAF tick. */
+.gg-banner.is-scroll {
+  --p: 0;
+}
+
+/* Geometry stays fully drawn — a cover rect does the darkening. */
+.gg-banner.is-scroll .gg-line {
+  animation: none;
+  stroke-dashoffset: 0;
+}
+
+.gg-banner.is-scroll .gg-pop {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+/* Darkening cover — a bg-colored rect that grows from the right (newest) toward
+   the left (oldest) as --p → 1, so scrolling into older commits "rewinds". The
+   soft left edge is a gradient fill defined on the <rect> in the component. */
+.gg-banner.is-scroll .gg-fade {
+  transform-box: fill-box;
+  transform-origin: right center;
+  transform: scaleX(var(--p, 0));
+}
+
+/* Accessibility: no motion → show the final frame immediately (both modes) */
+@media (prefers-reduced-motion: reduce) {
+  .gg-banner.is-scroll .gg-fade {
+    display: none;
+  }
+  .gg-banner .gg-line,
+  .gg-banner.is-scroll .gg-line {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  .gg-banner .gg-pop,
+  .gg-banner.is-scroll .gg-pop {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}

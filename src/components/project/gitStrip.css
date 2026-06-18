@@ -1,0 +1,76 @@
+/* ================================================
+   Project Git Strip — horizontal, page-scroll-synced.
+   Mirrors the depth GitGraph technique: a single `--p`
+   (0→1) — written once per rAF tick from the commits
+   panel scroll — drives every animation in pure CSS
+   (transform / opacity / stroke-dashoffset). No per-frame
+   React render, no backdrop-filter behind the moving SVG.
+   ================================================ */
+
+.git-strip {
+  --p: 0;
+}
+
+.git-strip-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Trunk: dim base + bright "live" copy drawn left→right by --p */
+.git-strip-svg .strip-trunk-base {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 2;
+}
+
+.git-strip-svg .strip-trunk-live {
+  stroke: var(--accent, #3c72c6);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: clamp(0, calc(1 - var(--p, 0)), 1);
+}
+
+/* Commit dots pop in as the playhead passes their position (--t) */
+.git-strip-svg .strip-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  stroke: #07070d;
+  stroke-width: 0.75;
+  opacity: clamp(0.12, calc((var(--p, 0) - var(--t, 0)) * 18 + 1), 1);
+  transform: scale(clamp(0.35, calc((var(--p, 0) - var(--t, 0)) * 14 + 1), 1));
+}
+
+/* Playhead / HEAD — travels along the trunk with --p */
+.git-strip-svg .git-strip-head {
+  transform: translateX(calc(var(--head0, 0px) + var(--p, 0) * var(--headK, 0px)));
+}
+
+.git-strip-svg .git-strip-head-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1.6;
+}
+
+.git-strip-svg .git-strip-head-core {
+  fill: #fff;
+}
+
+.git-strip-svg .git-strip-head-tick {
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .git-strip-svg .strip-trunk-live {
+    stroke-dashoffset: 0;
+  }
+  .git-strip-svg .strip-dot {
+    opacity: 1;
+    transform: none;
+  }
+  .git-strip-svg .git-strip-head {
+    display: none;
+  }
+}

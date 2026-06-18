@@ -78,6 +78,7 @@ export default async function ProjectPage({
           live={isActive}
           repoMeta={repoMeta}
           technologies={project.technologies}
+          accent={project.accentColor}
         />
       </aside>
     </div>

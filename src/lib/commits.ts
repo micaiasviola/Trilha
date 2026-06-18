@@ -18,6 +18,33 @@ const DEFAULT_OWNER = "micaiasviola";
 const MAX_COMMITS = 60;
 export const MIN_COMMITS = 10;
 
+// ── Branch tier (generative graph) ───────────────────────────
+/**
+ * Maps a repo's total commit count (summed across branches, see getRepoMeta) to
+ * how many FEATURE branches the generative git graph draws — the "level" of the
+ * repo. The main line is always present and is NOT counted here.
+ *
+ * Calibrated for the summed-commit scale so the real projects spread across the
+ * whole range instead of all hitting the ceiling:
+ *   total < 1     → 0  (no data / empty repo: just the main line)
+ *   total ≥ 1     → 1
+ *   total ≥ 50    → 2
+ *   total ≥ 150   → 3
+ *   total ≥ 500   → 4
+ *   total ≥ 1500  → 5
+ *
+ * Single source of truth shared by GitGraph (diagonal) and GitGraphBanner
+ * (horizontal). Tweak these cutoffs here to retune every graph at once.
+ */
+export function featureBranchCount(total: number): number {
+  if (total >= 1500) return 5;
+  if (total >= 500) return 4;
+  if (total >= 150) return 3;
+  if (total >= 50) return 2;
+  if (total >= 1) return 1;
+  return 0;
+}
+
 // ── Shared helpers ───────────────────────────────────────────
 function buildHeaders(): Record<string, string> {
   const h: Record<string, string> = {
@@ -65,9 +92,38 @@ function weekNum(commitDate: string, startDate: string): number {
 }
 
 // ── getRepoMeta ──────────────────────────────────────────────
+const BRANCH_SUM_CAP = 25; // safety cap on how many branches we sum commits over
+
+/** Commit count reachable from a branch ref. 0 on failure. */
+async function countCommitsOnBranch(
+  owner: string,
+  repo: string,
+  branch: string,
+  headers: Record<string, string>,
+): Promise<number> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/commits?sha=${encodeURIComponent(
+        branch,
+      )}&per_page=1`,
+      { headers, next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return 0;
+    return lastPageFromLink(res.headers.get("Link")) || ((await res.json()) as unknown[]).length;
+  } catch {
+    return 0;
+  }
+}
+
 /**
  * Fetches branch count, PR count and total commit count for a repo.
- * Uses per_page=1 + Link header trick to count without fetching all items.
+ *
+ * `totalCommits` is the SUM of every branch's commit count (capped at
+ * BRANCH_SUM_CAP), not just the default branch. This deliberately counts
+ * history shared between branches multiple times — the metric reflects total
+ * work across the whole repo, so it grows with branching activity and feeds
+ * every indicator (graph tiers via featureBranchCount, captions, project
+ * detail). Per-branch counts use the per_page=1 + Link-header trick.
  * Returns null on any API failure.
  */
 export async function getRepoMeta(githubRepo: string): Promise<RepoMeta | null> {
@@ -75,8 +131,8 @@ export async function getRepoMeta(githubRepo: string): Promise<RepoMeta | null> 
   const [owner, repo] = parseRepo(githubRepo);
 
   try {
-    const [branchRes, prRes, commitRes] = await Promise.all([
-      fetch(`https://api.github.com/repos/${owner}/${repo}/branches?per_page=1`, {
+    const [branchRes, prRes] = await Promise.all([
+      fetch(`https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`, {
         headers,
         next: { revalidate: 3600 },
       }),
@@ -84,29 +140,55 @@ export async function getRepoMeta(githubRepo: string): Promise<RepoMeta | null> 
         headers,
         next: { revalidate: 3600 },
       }),
-      fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=1`, {
-        headers,
-        next: { revalidate: 3600 },
-      }),
     ]);
 
     if (!branchRes.ok) return null;
 
-    const branches =
-      lastPageFromLink(branchRes.headers.get("Link")) ||
-      ((await branchRes.json()) as unknown[]).length;
+    const branchNames = ((await branchRes.json()) as Array<{ name: string }>).map((b) => b.name);
+    const branches = branchNames.length;
 
     const prs =
       lastPageFromLink(prRes.headers.get("Link")) ||
       (prRes.ok ? ((await prRes.json()) as unknown[]).length : 0);
 
-    const totalCommits =
-      lastPageFromLink(commitRes.headers.get("Link")) ||
-      (commitRes.ok ? ((await commitRes.json()) as unknown[]).length : 0);
+    // Sum commits across ALL branches (shared history counted once per branch).
+    const perBranch = await Promise.all(
+      branchNames.slice(0, BRANCH_SUM_CAP).map((name) =>
+        countCommitsOnBranch(owner, repo, name, headers),
+      ),
+    );
+    const totalCommits = perBranch.reduce((sum, n) => sum + n, 0);
 
     return { branches, prs, totalCommits };
   } catch {
     return null;
+  }
+}
+
+// ── getRepoBranches ──────────────────────────────────────────
+/**
+ * Fetches up to `cap` real branch names for a repo. Token-aware via
+ * buildHeaders() (uses GITHUB_TOKEN when set). Returns [] on failure.
+ * The repo's default branch (main/master) is hoisted to the front when
+ * present so the graph can treat the rest as feature offshoots.
+ */
+export async function getRepoBranches(githubRepo: string, cap = 12): Promise<string[]> {
+  const headers = buildHeaders();
+  const [owner, repo] = parseRepo(githubRepo);
+
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/branches?per_page=${cap}`,
+      { headers, next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as Array<{ name: string }>;
+    const names = data.map((b) => b.name);
+    const defIdx = names.findIndex((n) => n === "main" || n === "master");
+    if (defIdx > 0) names.unshift(names.splice(defIdx, 1)[0]);
+    return names;
+  } catch {
+    return [];
   }
 }
 
