@@ -9,6 +9,7 @@ import type { Project } from '@/lib/types'
 import { type GitGraphCommit, type GitGraphNode } from '@/components/depth/GitGraph'
 import { GitGraphBanner } from '@/components/depth/GitGraphBanner'
 import { ProjectStack } from '@/components/ProjectStack'
+import { ScrollCue } from '@/components/ScrollCue'
 import './depthScrollStage.css'
 
 // Per-project git data for the scroll-synced graph (built server-side).
@@ -125,6 +126,9 @@ export function ProjectsDepthShowcase({
 
   return (
     <>
+      {/* Dica de scroll vertical (SCROLL ↓), ao lado dos cards — desktop */}
+      <ScrollCue className="fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 lg:block" />
+
       {/* Depth stage — wheel/touch captured, keyboard navigable */}
       <div
         ref={ref as React.RefObject<HTMLDivElement>}

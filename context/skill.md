@@ -13,6 +13,24 @@ implementar qualquer feature de UI/UX.
 
 ---
 
+## Estado atual no projeto (jun/2026)
+
+Os treinos são a **referência de qualidade** (escritos para o ECQUA-PAGE vanilla). O
+estado real do código vive em `contexto.md` — consulte-o para o que existe hoje. Onde
+o projeto evoluiu/divergiu:
+
+- **Home = showcase em profundidade** (`src/lib/depth/depthScrollEngine.ts` +
+  `ProjectsDepthShowcase`). Substituiu a galeria horizontal pinada — o `TREINO-SCROLL`
+  §9–10 (`pin` + `containerAnimation`) segue válido como teoria, mas **não está em uso**.
+- **Canvas generativo** (`TREINO-CANVAS-GENERATIVO`) virou **fundo da atração** e camada
+  das atrações com pôster (`posterBg`).
+- **Skill local** para fundos SVG tipográficos vetorizados:
+  `.claude/skills/poster-svg-brutalista/` (invoque por `/poster-svg-brutalista`) — gera e
+  replica os pôsteres, com armadilhas próprias documentadas.
+- **Navegação** unificada na Home; rotas `/projetos` e `/linha-do-tempo` removidas.
+
+---
+
 ## Índice dos treinos
 
 | # | Arquivo | O que ensina | Quando ler |
@@ -40,8 +58,9 @@ implementar qualquer feature de UI/UX.
 | Entrada do hero coordenada pós-preloader | ANIMACOES | §4.4 |
 | Texto que ilumina letra a letra via scroll | ANIMACOES + SCROLL | §6.1 + §8 |
 | Scroll suave (Lenis + ticker) | SCROLL | §4–5 |
-| Galeria horizontal com pin + scrub | SCROLL | §9–10 |
-| Parallax interno em painel horizontal (`containerAnimation`) | ANIMACOES | §6.3 |
+| Showcase em profundidade (a Home, depth scroll) | — | `src/lib/depth/` + `contexto.md §4.8` |
+| Galeria horizontal com pin + scrub *(teoria; não usado hoje)* | SCROLL | §9–10 |
+| Parallax interno em painel horizontal (`containerAnimation`) *(teoria)* | ANIMACOES | §6.3 |
 | `gsap.matchMedia` desktop ≠ mobile | SCROLL | §12 |
 | Preloader + orquestração de abertura | PRELOADER | §2–5 |
 | Cursor personalizado com lerp | CURSOR | inteiro |
