@@ -15,7 +15,7 @@
     "Preloader que pula com qualquer interação e roda só 1x por sessão; reduced-motion respeitado em todas as animações"
   ],
   "accentColor": "#34d399",
-  "posterBg": "",
+  "posterBg": "/trilha-bg.svg",
   "story": {
     "context": "Eu fazia muita coisa na ECQUA semana a semana, mas o registro se perdia. Queria um lugar que contasse essa história de forma navegável — não um portfólio estático, mas um diário vivo, alimentado por arquivos versionados no próprio repositório.",
     "decisions": [

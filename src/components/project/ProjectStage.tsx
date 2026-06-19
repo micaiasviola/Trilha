@@ -8,6 +8,7 @@ import { Words } from "@/components/anim/SplitWords";
 import { Magnetic } from "@/components/anim/Magnetic";
 import { Odometer } from "@/components/anim/Odometer";
 import { GenerativeCanvas } from "@/components/anim/GenerativeCanvas";
+import { PosterGridFx } from "@/components/anim/PosterGridFx";
 import { StatusBadge, TechBadge } from "@/components/Badge";
 import { STATUS_LABEL, formatLong } from "@/lib/format";
 import type { Project } from "@/lib/types";
@@ -31,6 +32,10 @@ export function ProjectStage({
   const root = useRef<HTMLDivElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
   const towerRef = useRef<HTMLDivElement>(null);
+
+  // "trilha": o fundo é o efeito grid-displacement sobre o pôster (escuro, foco
+  // na descrição) — sem holofote/torre. ECQUA-360 mantém pôster + holofote + torre.
+  const gridFx = Boolean(project.posterBg) && project.slug === "trilha";
 
   useGSAP(
     () => {
@@ -78,6 +83,9 @@ export function ProjectStage({
     const tower = towerRef.current;
     const stage = root.current;
     if (!tower || !stage) return;
+
+    // trilha usa o efeito grid-displacement (sem holofote) → nada a animar aqui.
+    if (gridFx) return;
 
     // Sem hover (touch) ou movimento reduzido: torre cobre, SVG escondido.
     if (!window.matchMedia("(hover: hover)").matches || prefersReducedMotion()) {
@@ -139,7 +147,7 @@ export function ProjectStage({
       stage.removeEventListener("pointerleave", onLeave);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [project.posterBg]);
+  }, [project.posterBg, gridFx]);
 
   const number = String(index + 1).padStart(2, "0");
 
@@ -147,59 +155,70 @@ export function ProjectStage({
     <div ref={root} className="relative">
       {/* Fundo da atração */}
       {project.posterBg ? (
-        /* Atração com pôster (campo posterBg): SVG repetido + torre à esquerda */
-        <>
-          {/* Camada 1 — pôster repetido até o fim da página */}
-          <div
-            ref={posterRef}
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] opacity-90 lg:block"
-            style={
-              {
-                backgroundImage: `url(${project.posterBg})`,
-                backgroundRepeat: "repeat-y",
-                backgroundSize: "100% auto",
-                "--mx": "50%",
-                "--my": "50%",
-                "--r": "0px",
-                WebkitMaskImage:
-                  "radial-gradient(circle var(--r) at var(--mx) var(--my), #000 0%, #000 30%, transparent 70%)",
-                maskImage:
-                  "radial-gradient(circle var(--r) at var(--mx) var(--my), #000 0%, #000 30%, transparent 70%)",
-              } as CSSProperties
-            }
-          />
-          {/* Camada 2 — fade de legibilidade sobre o texto */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] bg-gradient-to-r from-bg via-bg/40 to-transparent lg:block"
-          />
-          {/* Camada 3 — torre wireframe (sticky) SOBRE o pôster; o cursor abre
-              um buraco que revela o SVG. Sticky = sempre cobre o pôster ao rolar. */}
-          <div
-            aria-hidden
-            className="pointer-events-none sticky top-0 hidden h-[calc(100svh-4rem)] lg:block"
-            style={{ marginBottom: "calc(-1 * (100svh - 4rem))" }}
-          >
+        gridFx ? (
+          /* TRILHA — efeito grid-displacement sobre o pôster (fundo escuro) */
+          <>
+            <PosterGridFx src={project.posterBg} opacity={0.45} />
+            {/* fade reforçado: prioriza a leitura da descrição à esquerda */}
             <div
-              ref={towerRef}
-              className="absolute right-0 top-0 h-full w-[54%]"
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] bg-gradient-to-r from-bg via-bg/60 to-transparent lg:block"
+            />
+          </>
+        ) : (
+          /* ECQUA-360 — pôster repetido + holofote + torre wireframe */
+          <>
+            {/* Camada 1 — pôster repetido até o fim da página */}
+            <div
+              ref={posterRef}
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] opacity-90 lg:block"
               style={
                 {
+                  backgroundImage: `url(${project.posterBg})`,
+                  backgroundRepeat: "repeat-y",
+                  backgroundSize: "100% auto",
                   "--mx": "50%",
                   "--my": "50%",
                   "--r": "0px",
                   WebkitMaskImage:
-                    "radial-gradient(circle var(--r) at var(--mx) var(--my), transparent 0%, transparent 30%, #000 70%)",
+                    "radial-gradient(circle var(--r) at var(--mx) var(--my), #000 0%, #000 30%, transparent 70%)",
                   maskImage:
-                    "radial-gradient(circle var(--r) at var(--mx) var(--my), transparent 0%, transparent 30%, #000 70%)",
+                    "radial-gradient(circle var(--r) at var(--mx) var(--my), #000 0%, #000 30%, transparent 70%)",
                 } as CSSProperties
               }
+            />
+            {/* Camada 2 — fade de legibilidade sobre o texto */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 hidden w-[54%] bg-gradient-to-r from-bg via-bg/40 to-transparent lg:block"
+            />
+            {/* Camada 3 — torre wireframe (sticky); o cursor abre um buraco que revela o SVG */}
+            <div
+              aria-hidden
+              className="pointer-events-none sticky top-0 hidden h-[calc(100svh-4rem)] lg:block"
+              style={{ marginBottom: "calc(-1 * (100svh - 4rem))" }}
             >
-              <GenerativeCanvas seed={project.slug} className="h-full w-full" />
+              <div
+                ref={towerRef}
+                className="absolute right-0 top-0 h-full w-[54%]"
+                style={
+                  {
+                    "--mx": "50%",
+                    "--my": "50%",
+                    "--r": "0px",
+                    WebkitMaskImage:
+                      "radial-gradient(circle var(--r) at var(--mx) var(--my), transparent 0%, transparent 30%, #000 70%)",
+                    maskImage:
+                      "radial-gradient(circle var(--r) at var(--mx) var(--my), transparent 0%, transparent 30%, #000 70%)",
+                  } as CSSProperties
+                }
+              >
+                <GenerativeCanvas seed={project.slug} className="h-full w-full" />
+              </div>
             </div>
-          </div>
-        </>
+          </>
+        )
       ) : (
         /* Canvas generativo sticky — permanece visível enquanto o conteúdo rola */
         <div
