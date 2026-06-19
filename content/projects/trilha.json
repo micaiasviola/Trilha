@@ -1,0 +1,58 @@
+{
+  "slug": "trilha",
+  "name": "Trilha",
+  "tagline": "O próprio dev-journal: site interativo que transforma o trabalho semanal na ECQUA em narrativa navegável.",
+  "description": "Este site. Um diário de desenvolvimento que converte minhas anotações brutas de trabalho na ECQUA em conteúdo estruturado e navegável — atrações por projeto, linha do tempo e timeline de commits ao vivo. Construído em Next.js (App Router) com animações GSAP, scroll suave (Lenis) e um canvas generativo próprio, tudo com guarda de reduced-motion e pausa fora da tela.",
+  "status": "in-progress",
+  "role": "Criador & Full-Stack Dev",
+  "order": 7,
+  "startDate": "2026-06-17",
+  "endDate": null,
+  "technologies": ["Next.js", "TypeScript", "Tailwind CSS", "GSAP", "Lenis"],
+  "highlights": [
+    "Canvas generativo 2D (torre wireframe com projeção 3D à mão), seed única por atração, DPR cap e pausa via IntersectionObserver",
+    "Git-graph generativo e timeline de commits ao vivo do GitHub, com fallback silencioso quando a API falha",
+    "Preloader que pula com qualquer interação e roda só 1x por sessão; reduced-motion respeitado em todas as animações"
+  ],
+  "accentColor": "#34d399",
+  "posterBg": "",
+  "story": {
+    "context": "Eu fazia muita coisa na ECQUA semana a semana, mas o registro se perdia. Queria um lugar que contasse essa história de forma navegável — não um portfólio estático, mas um diário vivo, alimentado por arquivos versionados no próprio repositório.",
+    "decisions": [
+      {
+        "title": "Conteúdo em arquivos JSON versionados, sem CMS",
+        "rationale": "Cada atração é um JSON em content/projects/ lido no build. Zero infra de CMS, tudo no git, site estático e rápido. Adicionar um projeto é criar um arquivo."
+      },
+      {
+        "title": "Animações pesadas, mas educadas",
+        "rationale": "GSAP + Lenis dão o scroll cinematográfico, mas tudo passa por prefers-reduced-motion e o canvas pausa fora da tela (IntersectionObserver) com DPR limitado. Performance não é opcional."
+      },
+      {
+        "title": "Canvas generativo à mão em 2D",
+        "rationale": "Em vez de uma lib 3D pesada, uma torre wireframe com projeção 3D manual e seed por atração dá identidade visual única e leve a cada projeto."
+      }
+    ],
+    "challenges": [
+      {
+        "title": "Preloader que não atrapalha",
+        "howSolved": "A intro de ~3s pula com qualquer interação (pointer, teclado, wheel, touch) e usa sessionStorage para não repetir a cada reload na mesma aba."
+      },
+      {
+        "title": "Commits ao vivo sem quebrar offline",
+        "howSolved": "A timeline busca commits do GitHub no servidor; se a API falha ou não há token, cai silenciosamente para o conteúdo curado, sem erro na página."
+      }
+    ],
+    "deliveries": [
+      "Showcase de atrações com design brutalista por cards",
+      "Páginas de projeto com história (decisões, desafios, entregas) e timeline de commits ao vivo",
+      "Git-graph generativo integrado ao showcase e ao painel de commits",
+      "Linha do tempo, preloader com intro e canvas generativo por atração"
+    ],
+    "learning": "Conteúdo versionado em arquivos + efeitos pausáveis no lugar certo valem mais que infra. O git já é o CMS; o navegador já é o palco."
+  },
+  "milestones": [
+    { "date": "2026-06-17", "title": "Início — estrutura Next.js, conteúdo em JSON e showcase de atrações" },
+    { "date": "2026-06-18", "title": "Git-tree generativo + painel de commits; fundo brutalista do ECQUA-360" }
+  ],
+  "githubRepo": "Trilha"
+}

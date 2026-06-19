@@ -74,13 +74,25 @@ export function ProjectsDepthShowcase({
     commits: graph?.[i]?.commits ?? [],
   }))
 
-  // Read ?projeto=<slug> on mount and navigate to that project
+  // Auto-scroll: pausa quando o usuário (ou um restore) assume o controle.
+  const lastInteractRef = useRef(0)
+  const dirRef = useRef(1)
+  const markInteract = () => {
+    lastInteractRef.current = performance.now()
+  }
+
+  // Memória de navegação (Nielsen #6: reconhecer, não lembrar): restaura o
+  // projeto ativo a partir de ?projeto=<slug> ao voltar pra Home, e segura o
+  // auto-advance logo após, pra a posição restaurada não ser "roubada".
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const slug = params.get('projeto')
     if (!slug) return
     const idx = projects.findIndex((p) => p.slug === slug)
-    if (idx > 0) engine.current?.goTo(idx)
+    if (idx > 0) {
+      engine.current?.goTo(idx)
+      markInteract()
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync URL on layer change (no history spam)
@@ -91,13 +103,6 @@ export function ProjectsDepthShowcase({
     url.searchParams.set('projeto', slug)
     history.replaceState(null, '', url.toString())
   }, [active, projects])
-
-  // Auto-scroll: pause for a bit whenever the user takes over.
-  const lastInteractRef = useRef(0)
-  const dirRef = useRef(1)
-  const markInteract = () => {
-    lastInteractRef.current = performance.now()
-  }
 
   // Auto-advance through projects when idle — ping-pong, honors reduced motion.
   useEffect(() => {

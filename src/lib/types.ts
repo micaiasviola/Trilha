@@ -41,5 +41,7 @@ export interface Project {
   story?: ProjectStory;
   milestones?: Milestone[];
   githubRepo?: string;
+  /** Caminho em /public do pôster SVG de fundo da atração (ex.: "/trilha-bg.svg"). Vazio/ausente = canvas generativo padrão. */
+  posterBg?: string;
   placeholder?: boolean;
 }
