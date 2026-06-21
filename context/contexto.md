@@ -3,7 +3,7 @@
 Referência viva das regras que governam o sistema. Sempre que um agente (IA ou dev)
 precisar tomar uma decisão de implementação, este documento é a fonte de verdade do
 projeto. Para aprofundar qualquer regra de animação/UI, consulte os treinos mapeados
-em `skill.md`.
+em `context/skill_treino_fable.md`.
 
 > **Atualizado** com base no repositório atual: Home unificada no showcase em
 > profundidade, integração real com a GitHub API, fundo de pôster por `posterBg` e
@@ -174,6 +174,10 @@ conforme o scroll virtual. Substitui a antiga galeria horizontal pinada.
 
 `reduced-motion` é respeitado pela própria engine (ease = 1, sem parallax).
 
+> **Contexto detalhado do módulo:** `context/depth-scroll/` — `README.md` (engine,
+> contrato CSS, invariantes, tuning) e `interacoes-e-decisoes.md` (roda discreta
+> `wheelStep` + auto-advance híbrido, com o racional das decisões).
+
 ### 4.9 Magnetic (`src/components/anim/Magnetic.tsx`)
 ```tsx
 <Magnetic strength={0.25}>...</Magnetic>
@@ -279,7 +283,8 @@ content/
   projects/                 ← *.json (uma atração por arquivo)
 context/
   contexto.md               ← este arquivo
-  skill.md                  ← mapa dos treinos de front-end
+  skill_treino_fable.md     ← mapa dos treinos de front-end
+  depth-scroll/             ← contexto do módulo de scroll em profundidade (README + decisões)
 .claude/skills/
   poster-svg-brutalista/    ← skill: gerar fundos SVG tipográficos vetorizados (§12)
 PROMPT.md                   ← prompt reutilizável para gerar JSON de conteúdo

@@ -6,19 +6,16 @@ import { useDepthScroll } from '@/lib/depth/useDepthScroll'
 import { prefersReducedMotion } from '@/lib/anim/signal'
 import { STATUS_LABEL, formatLong } from '@/lib/format'
 import type { Project } from '@/lib/types'
-import { type GitGraphCommit, type GitGraphNode } from '@/components/depth/GitGraph'
-import { GitGraphBanner } from '@/components/depth/GitGraphBanner'
+import { GitTreeVertical } from '@/components/depth/GitTreeVertical'
+import type { RepoGraph } from '@/lib/commits'
 import { ProjectStack } from '@/components/ProjectStack'
 import { ScrollCue } from '@/components/ScrollCue'
 import './depthScrollStage.css'
 
-// Per-project git data for the scroll-synced graph (built server-side).
-export interface ProjectGraphData {
-  total: number
-  branches: number
-  branchNames: string[]
-  commits: GitGraphCommit[]
-}
+// Auto-advance (attract loop) — cadência do ping-pong e janela de ociosidade
+// antes de retomar após o usuário pausar (mover o mouse / rolar / tocar).
+const AUTO_INTERVAL_MS = 5000
+const AUTO_IDLE_MS = 5000
 
 type ShowcaseProject = Pick<
   Project,
@@ -37,10 +34,10 @@ type ShowcaseProject = Pick<
 
 export function ProjectsDepthShowcase({
   projects,
-  graph,
+  repoGraphs,
 }: {
   projects: ShowcaseProject[]
-  graph?: ProjectGraphData[]
+  repoGraphs?: (RepoGraph | null)[]
 }) {
   const [active, setActive] = useState(0)
   // Fixed right-hand nav — receives the live scroll progress as `--p` so the
@@ -52,10 +49,13 @@ export function ProjectsDepthShowcase({
     snap: true,
     snapDelay: 120,
     keyboard: true,
-    smoothing: 0.12, // settles a touch faster
-    wheelSpeed: 1.8, // faster scroll — more travel per notch
+    smoothing: 0.16, // settle crisply onto each card (discrete feel)
+    wheelStep: true, // 1 gesto de roda = 1 card (não pula direto pro próximo)
+    stepGap: 240, // pausa > 240ms entre eventos = novo gesto → próximo card
+    stepThreshold: 20, // ignora micro-jitter da roda/trackpad
+    wheelSpeed: 1.8, // (fallback contínuo, se wheelStep desligar)
     touchSpeed: 2.4,
-    length: projects.length * 520, // shorter depth per layer = faster traversal
+    length: projects.length * 520,
     layerCount: projects.length,
     onLayerChange: setActive,
     onUpdate: (s) => {
@@ -63,28 +63,23 @@ export function ProjectsDepthShowcase({
     },
   })
 
-  // Merge display data + git data into nodes for the graph (same order).
-  const graphNodes: GitGraphNode[] = projects.map((p, i) => ({
-    slug: p.slug,
-    name: p.name,
-    accent: p.accentColor ?? '#3c72c6',
-    year: p.startDate.slice(0, 4),
-    total: graph?.[i]?.total ?? 0,
-    branches: graph?.[i]?.branches ?? 0,
-    branchNames: graph?.[i]?.branchNames ?? [],
-    commits: graph?.[i]?.commits ?? [],
-  }))
-
-  // Auto-scroll: pausa quando o usuário (ou um restore) assume o controle.
+  // Auto-scroll = attract loop (cede ao usuário). Dois níveis:
+  //  • pauseAuto: mover o mouse / rolar / tocar / teclado ADIAM o avanço; ele
+  //    retoma só após AUTO_IDLE_MS sem interação.
+  //  • stopAuto: SELECIONAR um projeto (card / timeline / deep-link) PARA de vez.
   const lastInteractRef = useRef(0)
+  const autoStoppedRef = useRef(false)
   const dirRef = useRef(1)
-  const markInteract = () => {
+  const pauseAuto = () => {
     lastInteractRef.current = performance.now()
+  }
+  const stopAuto = () => {
+    autoStoppedRef.current = true
   }
 
   // Memória de navegação (Nielsen #6: reconhecer, não lembrar): restaura o
-  // projeto ativo a partir de ?projeto=<slug> ao voltar pra Home, e segura o
-  // auto-advance logo após, pra a posição restaurada não ser "roubada".
+  // projeto ativo a partir de ?projeto=<slug> ao voltar pra Home e PARA o
+  // auto-advance (o usuário chegou num projeto específico de propósito).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const slug = params.get('projeto')
@@ -92,7 +87,7 @@ export function ProjectsDepthShowcase({
     const idx = projects.findIndex((p) => p.slug === slug)
     if (idx > 0) {
       engine.current?.goTo(idx)
-      markInteract()
+      stopAuto()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -105,24 +100,34 @@ export function ProjectsDepthShowcase({
     history.replaceState(null, '', url.toString())
   }, [active, projects])
 
-  // Auto-advance through projects when idle — ping-pong, honors reduced motion.
+  // Navegação por teclado (setas/espaço/page) = usuário dirigindo → pausa o avanço.
+  useEffect(() => {
+    const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', ' ', 'Spacebar']
+    const onKey = (e: KeyboardEvent) => {
+      if (keys.includes(e.key)) lastInteractRef.current = performance.now()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // Auto-advance through projects until the user interacts — ping-pong, RM-safe.
   useEffect(() => {
     const count = projects.length
     if (count < 2 || prefersReducedMotion()) return
     const id = setInterval(() => {
-      if (performance.now() - lastInteractRef.current < 6000) return // user is driving
+      if (autoStoppedRef.current) return // selecionou um projeto → parado de vez
+      if (performance.now() - lastInteractRef.current < AUTO_IDLE_MS) return // presente
       const e = engine.current
       if (!e) return
       const cur = e.activeLayer < 0 ? 0 : e.activeLayer
       if (cur >= count - 1) dirRef.current = -1
       else if (cur <= 0) dirRef.current = 1
       e.goTo(cur + dirRef.current)
-    }, 5000)
+    }, AUTO_INTERVAL_MS)
     return () => clearInterval(id)
   }, [projects.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = projects[active]
-  const activeNode = graphNodes[active]
 
   return (
     <>
@@ -134,9 +139,10 @@ export function ProjectsDepthShowcase({
         ref={ref as React.RefObject<HTMLDivElement>}
         className="depth-stage"
         data-lenis-prevent
-        onWheel={markInteract}
-        onTouchStart={markInteract}
-        onPointerDown={markInteract}
+        onPointerMove={pauseAuto}
+        onWheel={pauseAuto}
+        onTouchStart={pauseAuto}
+        onPointerDown={pauseAuto}
         style={
           {
             '--count': projects.length,
@@ -235,6 +241,7 @@ export function ProjectsDepthShowcase({
                 <Link
                   href={`/projetos/${project.slug}`}
                   tabIndex={i === active ? 0 : -1}
+                  onFocus={stopAuto}
                   className="mt-7 inline-block border-2 border-white bg-white px-5 py-2 font-mono text-xs font-bold uppercase tracking-widest text-black transition-colors duration-150 hover:bg-transparent hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white after:absolute after:inset-0 after:content-['']"
                 >
                   Ver história →
@@ -245,8 +252,9 @@ export function ProjectsDepthShowcase({
         ))}
       </div>
 
-      {/* Fixed nav overlay — position: fixed in CSS */}
+      {/* Right panel — project list stacked above the git graph */}
       {current && (
+        <div className="depth-right" onPointerMove={pauseAuto}>
         <nav
           ref={navRef}
           className="depth-nav"
@@ -264,11 +272,11 @@ export function ProjectsDepthShowcase({
                   <button
                     type="button"
                     onClick={() => {
-                      markInteract()
+                      stopAuto()
                       engine.current?.goTo(i)
                     }}
                     aria-current={i === active ? 'true' : undefined}
-                    className="group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+                    className="group flex w-full items-center gap-2.5 px-2 py-1.5 text-left transition-colors hover:bg-white/5"
                   >
                     <span
                       className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${
@@ -307,34 +315,15 @@ export function ProjectsDepthShowcase({
             </Link>
           </div>
         </nav>
-      )}
 
-      {/* Git tree — generative banner, pinned top-right (the wide area) */}
-      {activeNode && (
-        <div className="depth-tree-overlay">
-          <div className="depth-nav-graph-head depth-tree-overlay-head">
-            <p className="depth-nav-label">Git Tree</p>
-            <p className="git-graph-caption">
-              <span
-                className="git-graph-dot"
-                style={{ background: activeNode.accent }}
-                aria-hidden
-              />
-              <span className="git-graph-cap-name">{activeNode.name}</span>
-              <span className="git-graph-cap-meta">
-                {activeNode.total > 0 ? `${activeNode.total} commits` : 'sem commits'}
-                {activeNode.branches > 0
-                  ? ` · ${activeNode.branches} ${activeNode.branches === 1 ? 'branch' : 'branches'}`
-                  : ''}
-              </span>
-            </p>
-          </div>
-          <GitGraphBanner
-            key={activeNode.slug}
-            total={activeNode.total}
-            accent={activeNode.accent}
-            commitTypes={activeNode.commits.map((c) => c.type)}
+        {/* Git graph of the active project — below the list */}
+        <aside className="depth-vtree" aria-label={`Git tree de ${current.name}`}>
+          <GitTreeVertical
+            graph={repoGraphs?.[active] ?? null}
+            name={current.name}
+            accent={current.accentColor ?? '#3c72c6'}
           />
+        </aside>
         </div>
       )}
     </>

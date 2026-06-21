@@ -1,6 +1,6 @@
 {
   "slug": "app-vistoria-ecqua",
-  "name": "App Vistoria ECQUA",
+  "name": "Ecqua Inspections",
   "tagline": "Vistorias prediais em campo — formulário padronizado e upload seguro direto da câmera.",
   "description": "Aplicativo mobile para os engenheiros da ECQUA registrarem vistorias prediais em campo. Antes, o fluxo era papel ou fotos avulsas no WhatsApp — sem padrão, sem rastreabilidade. O app padroniza o formulário de inspeção por tipo de edificação, captura fotos e envia via proxy seguro no Cloud Run.",
   "status": "in-progress",

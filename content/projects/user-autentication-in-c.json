@@ -5,7 +5,7 @@
   "description": "Projeto de faculdade em C que começou como exercício de autenticação de usuário e cresceu para um sistema de cadastro de produtos para um contexto de hortifruti. Sem bibliotecas externas, sem ORM, sem banco — tudo: structs, ponteiros e arquivos de texto. Foi o primeiro projeto em que precisei pensar em persistência de dados de verdade.",
   "status": "shipped",
   "role": "Dev",
-  "order": 6,
+  "order": 7,
   "startDate": "2024-09-08",
   "endDate": "2024-09-22",
   "technologies": ["C"],

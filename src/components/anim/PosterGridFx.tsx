@@ -9,7 +9,8 @@ import { prefersReducedMotion } from "@/lib/anim/signal";
  * (canvas próprio, não overlay fullscreen): uma grade GPGPU (Pass A) acumula a
  * velocidade do cursor e relaxa no tempo; o shader de display (Pass B) deforma o
  * pôster por esse campo e separa R/G/B. Guarda reduced-motion / pointer grosso /
- * sem-WebGL → cai para o pôster estático (escuro). Pausa fora da tela e em aba oculta.
+ * sem-WebGL → cai para o pôster estático (escuro). Renderiza sob demanda: dorme
+ * quando a grade relaxa, e fora da tela / aba oculta; acorda no cursor.
  */
 
 // ── Shaders (idênticos ao assets/shaders/* da skill) ─────────────────────────
@@ -102,11 +103,15 @@ export function PosterGridFx({
 
       let renderer: import("three").WebGLRenderer;
       try {
-        renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        // antialias off: o plano cobre o canvas (sem borda de geometria visível),
+        // então MSAA só custaria memória/GPU sem efeito perceptível aqui.
+        renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
       } catch {
         return; // WebGL indisponível → fallback estático
       }
-      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      // Fundo escuro a ~0.45 de opacidade: 1.5 já satura. Custo ∝ DPR² → ~44% menos
+      // trabalho de fragment que 2.0, sem perda perceptível.
+      renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 100);
@@ -154,6 +159,44 @@ export function PosterGridFx({
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
       scene.add(mesh);
 
+      // ── Loop sob demanda ──────────────────────────────────────────────────
+      // Nem o sim nem o display shader usam uTime: parado o cursor e relaxada a
+      // grade, todo frame é idêntico. Logo renderizamos só enquanto há energia
+      // (cursor) + uma janela de relaxamento; depois dormimos. Acordamos no
+      // pointermove, ao reentrar na tela e ao repintar pós-resize/textura.
+      let raf = 0;
+      let inView = false;
+      let onScreen = false;
+      let ready = false;
+      let settle = 0;                 // frames restantes antes de dormir
+      const SETTLE_FRAMES = 50;       // margem p/ a grade relaxar até o repouso
+      const clock = new THREE.Clock();
+
+      const render = () => {
+        const u = variable.material.uniforms;
+        u.uTime.value = clock.getElapsedTime();
+        u.uMouseMove.value *= 0.95;
+        u.uDeltaMouse.value.multiplyScalar(PARAMS.relaxation);
+        gpu.compute();
+        material.uniforms.uGrid.value =
+          gpu.getCurrentRenderTarget(variable).texture;
+        renderer.render(scene, camera);
+        if (--settle <= 0) {          // campo em repouso e sem cursor → dorme
+          raf = 0;
+          return;
+        }
+        raf = requestAnimationFrame(render);
+      };
+      const stopLoop = () => {
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+      };
+      // Acorda por N frames: cursor, repaint pós-resize/textura, reentrada na tela.
+      const wake = (frames = SETTLE_FRAMES) => {
+        settle = Math.max(settle, frames);
+        if (!raf) raf = requestAnimationFrame(render);
+      };
+
       new THREE.TextureLoader().load(src, (t) => {
         t.colorSpace = THREE.SRGBColorSpace;
         material.uniforms.uTexture.value = t;
@@ -161,6 +204,7 @@ export function PosterGridFx({
           t.image.naturalWidth || 1200,
           t.image.naturalHeight || 1880,
         );
+        wake(2);                      // textura chegou → repinta (caso já dormindo)
       });
 
       // Dimensiona renderer/câmera/plano ao painel (escopo, não window).
@@ -176,6 +220,7 @@ export function PosterGridFx({
         mesh.scale.set(sizes.width, sizes.height, 1);
         renderer.setSize(w, h, false);
         material.uniforms.uContainerResolution.value.set(w, h);
+        if (ready && inView) wake(2);  // setSize limpa o buffer → repinta
       };
       resize();
 
@@ -183,12 +228,13 @@ export function PosterGridFx({
       const raycaster = new THREE.Raycaster();
       const pointer = new THREE.Vector2();
       const onMove = (e: PointerEvent) => {
+        if (!inView) return;           // fora da tela → não raycasta nem acorda
         const r = canvas.getBoundingClientRect();
         pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
         pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
         raycaster.setFromCamera(pointer, camera);
         const hit = raycaster.intersectObject(mesh)[0];
-        if (!hit || !hit.uv) return;
+        if (!hit || !hit.uv) return;   // cursor fora do plano → sem energia
         const u = variable.material.uniforms;
         u.uMouseMove.value = 1;
         const delta = hit.uv
@@ -197,45 +243,30 @@ export function PosterGridFx({
           .multiplyScalar(PARAMS.strength * 100);
         u.uDeltaMouse.value.copy(delta);
         u.uMouse.value.copy(hit.uv);
+        wake();                        // energia injetada → renderiza até relaxar
       };
 
-      const clock = new THREE.Clock();
-      let raf = 0;
-      const render = () => {
-        const u = variable.material.uniforms;
-        u.uTime.value = clock.getElapsedTime();
-        u.uMouseMove.value *= 0.95;
-        u.uDeltaMouse.value.multiplyScalar(PARAMS.relaxation);
-        gpu.compute();
-        material.uniforms.uGrid.value =
-          gpu.getCurrentRenderTarget(variable).texture;
-        renderer.render(scene, camera);
-        raf = requestAnimationFrame(render);
-      };
-      const startLoop = () => {
-        if (!raf) raf = requestAnimationFrame(render);
-      };
-      const stopLoop = () => {
-        if (raf) cancelAnimationFrame(raf);
-        raf = 0;
-      };
-
-      // Pausa fora da tela / em aba oculta (cidadania de performance).
-      const io = new IntersectionObserver(([entry]) => {
-        if (entry.isIntersecting && !document.hidden) startLoop();
+      // Visível = na tela E aba ativa; fora disso, dorme já.
+      const updateView = () => {
+        const next = onScreen && !document.hidden;
+        if (next === inView) return;
+        inView = next;
+        if (inView) wake(2);           // reentrou → repinta; cursor reacende depois
         else stopLoop();
+      };
+      const io = new IntersectionObserver(([entry]) => {
+        onScreen = entry.isIntersecting;
+        updateView();
       });
       io.observe(panel);
-      const onVisible = () => {
-        if (document.hidden) stopLoop();
-        else startLoop();
-      };
+      const onVisible = () => updateView();
       const ro = new ResizeObserver(resize);
       ro.observe(canvas);
 
       window.addEventListener("pointermove", onMove, { passive: true });
       document.addEventListener("visibilitychange", onVisible);
-      startLoop();
+      ready = true;
+      wake();                          // pintura inicial (cobre o load da textura)
       setFx(true);
 
       cleanup = () => {

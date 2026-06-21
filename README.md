@@ -3,12 +3,15 @@
 Site interativo e didático que conta a **história do desenvolvimento** que faço
 semana a semana na ECQUA Engenharia: decisões, tecnologias, desafios e entregas.
 
-> 📄 A visão completa e os schemas de conteúdo estão em [`PROMPT.md`](./PROMPT.md).
+> 📄 **Comece pelo [`PROMPT.md`](./PROMPT.md)** — documento de contexto principal do
+> site (visão, stack, rotas e modelo de conteúdo). Arquitetura detalhada em
+> [`context/contexto.md`](./context/contexto.md).
 
 ## Stack
 
-- **Next.js** (App Router) + **TypeScript** + **Tailwind CSS**
-- Conteúdo em **arquivos JSON** (`content/weeks`, `content/projects`)
+- **Next.js 15** (App Router) + **TypeScript** + **React 19** + **Tailwind CSS**
+- Animação: **GSAP** + **Lenis** + **Three.js** (sem backend próprio)
+- Conteúdo curado em **arquivos JSON** (`content/projects/`) + dados ao vivo da **GitHub API** (com fallback)
 
 ## Rodar localmente
 
@@ -22,12 +25,11 @@ npm run dev
 
 ```
 content/
-  weeks/      # 1 JSON por semana    (schema na Parte 2 do PROMPT.md)
-  projects/   # 1 JSON por projeto   (schema na Parte 3 do PROMPT.md)
+  projects/   # 1 JSON por projeto   (schema no §5 do PROMPT.md)
 src/
-  app/        # rotas (App Router)
-  components/ # componentes de UI
-  lib/        # tipos + carregamento de conteúdo
+  app/        # rotas (App Router): / (showcase) e /projetos/[slug]
+  components/ # componentes de UI (anim, depth, project)
+  lib/        # tipos, carregamento de conteúdo e GitHub API
 ```
 
 ## Status
