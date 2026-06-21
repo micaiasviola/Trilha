@@ -5,7 +5,7 @@
   "description": "Este site. Um diário de desenvolvimento que converte minhas anotações brutas de trabalho na ECQUA em conteúdo estruturado e navegável — atrações por projeto, linha do tempo e timeline de commits ao vivo. Construído em Next.js (App Router) com animações GSAP, scroll suave (Lenis) e um canvas generativo próprio, tudo com guarda de reduced-motion e pausa fora da tela.",
   "status": "in-progress",
   "role": "Criador & Full-Stack Dev",
-  "order": 7,
+  "order": 1,
   "startDate": "2026-06-17",
   "endDate": null,
   "technologies": ["Next.js", "TypeScript", "Tailwind CSS", "GSAP", "Lenis"],

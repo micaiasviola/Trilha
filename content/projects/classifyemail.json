@@ -5,7 +5,7 @@
   "description": "Serviço que classifica e prioriza e-mails automaticamente usando modelos de IA zero-shot. O modelo infere a categoria pelo conteúdo do e-mail — sem dataset de treinamento. Detecta phishing, spam de marketing e e-mails críticos, com score de confiança por categoria.",
   "status": "shipped",
   "role": "Full-Stack Dev",
-  "order": 4,
+  "order": 7,
   "startDate": "2025-08-28",
   "endDate": "2025-11-15",
   "technologies": ["Python", "FastAPI", "Gunicorn", "Docker", "HTML", "CSS"],

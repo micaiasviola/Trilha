@@ -1,6 +1,6 @@
 {
   "slug": "ecqua-360",
-  "name": "ECQUA 360",
+  "name": "Ecqua 360",
   "tagline": "CRM comercial com Kanban de leads e versionamento contínuo de propostas comerciais.",
   "description": "Sistema comercial interno que desenvolvo para a ECQUA gerenciar o funil de vendas de ponta a ponta. Antes, leads se perdiam no e-mail e propostas não tinham histórico de versão. A solução foi um Kanban com atualização de status idempotente via PLpgSQL — arrastar um card não duplica estado.",
   "status": "in-progress",

@@ -5,7 +5,7 @@
   "description": "Construo internamente na ECQUA um ERP para gestão de obras de engenharia civil. O problema era real: cada obra vivia em planilhas isoladas sem padrão, tornando impossível consolidar orçamentos, acompanhar medições e auditar pagamentos em escala. O ERP centraliza tudo — cadastro de obra, importação de orçamentos por planilha, medições versionadas com append-only e dashboard de pendências.",
   "status": "in-progress",
   "role": "Tech PM & Full-Stack Dev",
-  "order": 1,
+  "order": 6,
   "startDate": "2026-01-06",
   "endDate": null,
   "technologies": ["JavaScript", "Google Apps Script", "Google Sheets", "HTML", "CSS"],
