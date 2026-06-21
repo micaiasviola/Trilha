@@ -14,6 +14,12 @@ export interface DepthScrollOptions {
   parallax?: boolean
   snap?: boolean
   snapDelay?: number
+  /** Discrete wheel: each wheel gesture advances exactly one layer (no skipping). */
+  wheelStep?: boolean
+  /** Min ms gap between wheel events to treat them as a *new* gesture. */
+  stepGap?: number
+  /** Min accumulated wheel delta (px) before a step fires (filters jitter). */
+  stepThreshold?: number
   keyboard?: boolean
   layerCount?: number
   writeCssVars?: boolean
@@ -48,6 +54,10 @@ export class DepthScrollEngine {
   private _io?: IntersectionObserver
   // last values written to CSS vars — dedupe to skip redundant style recalc
   private _w: { p: number; v: number; s: number; px: number; py: number }
+  // discrete-wheel gesture state (wheelStep mode)
+  private _wheelLastTs: number
+  private _wheelAccum: number
+  private _wheelFired: boolean
 
   constructor(target: HTMLElement, options: DepthScrollOptions = {}) {
     this.target = target
@@ -68,6 +78,9 @@ export class DepthScrollEngine {
       parallax: true,
       snap: false,
       snapDelay: 160,
+      wheelStep: false,
+      stepGap: 220,
+      stepThreshold: 20,
       keyboard: false,
       layerCount: 0,
       writeCssVars: true,
@@ -94,6 +107,9 @@ export class DepthScrollEngine {
     this.pointerTarget = { x: 0, y: 0 }
     this.pointer = { x: 0, y: 0 }
     this._w = { p: NaN, v: NaN, s: NaN, px: NaN, py: NaN }
+    this._wheelLastTs = 0
+    this._wheelAccum = 0
+    this._wheelFired = false
 
     this.reducedMotion =
       typeof matchMedia === 'function' &&
@@ -211,7 +227,37 @@ export class DepthScrollEngine {
     return true
   }
 
+  /** Advance the target by one layer in `dir` (±1), clamped to the ends. */
+  private _stepBy(dir: number) {
+    if (this.o.layerCount < 2) return
+    const step = this.o.length / (this.o.layerCount - 1)
+    const curIdx = Math.round(this.targetValue / step)
+    this.goTo(curIdx + (dir >= 0 ? 1 : -1))
+  }
+
   private _onWheel(e: WheelEvent) {
+    // Discrete mode: one wheel gesture = one layer. A "gesture" is a burst of
+    // wheel events; a pause longer than stepGap starts a new one. This absorbs
+    // trackpad inertia / fast spins into a single step so we never skip a card.
+    if (this.o.wheelStep && this.o.layerCount > 1 && this.o.source === 'capture') {
+      const raw = this._normalizeWheel(e)
+      const dir = raw * (this.o.invert ? -1 : 1) >= 0 ? 1 : -1
+      if (!this._shouldCapture(dir)) return // at a bound (until-bounds) → let page scroll
+      e.preventDefault()
+      const now = performance.now()
+      if (now - this._wheelLastTs >= this.o.stepGap) {
+        this._wheelAccum = 0
+        this._wheelFired = false
+      }
+      this._wheelLastTs = now
+      this._wheelAccum += raw * (this.o.invert ? -1 : 1)
+      if (!this._wheelFired && Math.abs(this._wheelAccum) >= this.o.stepThreshold) {
+        this._stepBy(this._wheelAccum >= 0 ? 1 : -1)
+        this._wheelFired = true
+      }
+      return
+    }
+
     const delta = this._normalizeWheel(e) * this.o.wheelSpeed
     if (this._addInput(delta)) e.preventDefault()
   }

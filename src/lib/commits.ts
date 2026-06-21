@@ -252,3 +252,88 @@ export async function getProjectCommits(
 
   return commits;
 }
+
+// ── getRepoGraph (real DAG slice for the railroad git-graph) ──
+/**
+ * Recent commits of a repo WITH their parent links — the raw DAG slice the
+ * vertical git-graph needs to draw lanes / forks / merges like a real git client
+ * (e.g. VS Code's Git Graph). Just the default branch's recent history in date
+ * order (parents included) + branch/commit counts. Cheap: 3 API calls/repo,
+ * token-aware, cached 1h, silent null on failure. Lane assignment is done in the
+ * component (GitTreeVertical).
+ */
+export interface GraphCommit {
+  sha: string; // 7-char
+  parents: string[]; // 7-char parent shas
+  type: CommitType | "merge" | "other";
+  message: string;
+  date: string;
+}
+
+export interface RepoGraph {
+  total: number; // default-branch commit count (real)
+  branchCount: number; // real branch count
+  commits: GraphCommit[]; // newest → oldest (date order), capped
+}
+
+const GRAPH_MAX = 22; // commits in the graph window
+
+type ApiCommit = {
+  sha: string;
+  commit: { message: string; author: { date: string } };
+  parents?: { sha: string }[];
+};
+
+function toGraphCommit(c: ApiCommit): GraphCommit {
+  const firstLine = c.commit.message.split("\n")[0].trim();
+  const type: GraphCommit["type"] =
+    (c.parents?.length ?? 1) >= 2 ? "merge" : inferType(firstLine) ?? "other";
+  return {
+    sha: c.sha.slice(0, 7),
+    parents: (c.parents ?? []).map((p) => p.sha.slice(0, 7)),
+    type,
+    message: cleanMessage(firstLine) || firstLine,
+    date: c.commit.author.date.substring(0, 10),
+  };
+}
+
+export async function getRepoGraph(githubRepo: string): Promise<RepoGraph | null> {
+  const headers = buildHeaders();
+  const [owner, repo] = parseRepo(githubRepo);
+
+  try {
+    const brRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`,
+      { headers, next: { revalidate: 3600 } },
+    );
+    if (!brRes.ok) return null;
+    const branchNames = ((await brRes.json()) as Array<{ name: string }>).map((b) => b.name);
+    const def =
+      branchNames.find((n) => n === "main") ??
+      branchNames.find((n) => n === "master") ??
+      branchNames[0] ??
+      "main";
+
+    const [countRes, poolRes] = await Promise.all([
+      fetch(
+        `https://api.github.com/repos/${owner}/${repo}/commits?sha=${encodeURIComponent(def)}&per_page=1`,
+        { headers, next: { revalidate: 3600 } },
+      ),
+      fetch(
+        `https://api.github.com/repos/${owner}/${repo}/commits?sha=${encodeURIComponent(
+          def,
+        )}&per_page=${GRAPH_MAX}`,
+        { headers, next: { revalidate: 3600 } },
+      ),
+    ]);
+
+    const total = countRes.ok
+      ? lastPageFromLink(countRes.headers.get("Link")) || ((await countRes.json()) as unknown[]).length
+      : 0;
+    const commits = poolRes.ok ? ((await poolRes.json()) as ApiCommit[]).map(toGraphCommit) : [];
+
+    return { total, branchCount: branchNames.length, commits };
+  } catch {
+    return null;
+  }
+}

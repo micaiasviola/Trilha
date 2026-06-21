@@ -20,6 +20,19 @@
      Widen the gap toward 0.5/0.5 (e.g. 0.42/0.58) for an even later, sharper swap. */
   --fade-start: 0.35;
   --fade-end: 0.65;
+  /* Profundidade das camadas — o card em foco fica à FRENTE (Z=0) e os demais
+     AFUNDAM no fundo; ao scrollar, o próximo card SURGE do fundo até o foco.
+       --layer-depth  : quão fundo (px) um card vai ao sair de foco (↑ = emerge de + longe)
+       --layer-shrink : quanto encolhe (escala) ao afundar */
+  --layer-depth: 520px;
+  --layer-shrink: 0.08;
+  /* Arrasto por VELOCIDADE de scroll (lido por .depth-layer via --depth-velocity):
+       --drag-shift : deslocamento Y (px) no pico de velocidade — direção segue o scroll
+     Zera ao assentar (--depth-velocity → 0). Transform-only (GPU), sem paint/overdraw.
+     NOTA PERF: a translucidez dos cards no scroll (--scroll-fade) e o esticão
+     (scaleY/--drag-stretch) foram REMOVIDOS — translúcido quebra a oclusão do GPU
+     (overdraw) e o scaleY borra o texto. A sensação de velocidade fica no ::after. */
+  --drag-shift: 36px;
 }
 
 .depth-layer {
@@ -30,16 +43,19 @@
   /* signed distance (in layer units) from the focused layer */
   --rel: calc(var(--i) - var(--depth-progress, 0) * (var(--count) - 1));
   --abs-rel: max(var(--rel), calc(var(--rel) * -1));
+  /* Profundidade: foco à frente (Z=0), vizinhos afundam → o próximo card SURGE
+     do fundo (−Z, menor) e cresce até o foco; o que sai recua pro fundo.
+     O translate Y leva um "arrasto" por velocidade (transform-only, GPU). */
   transform:
-    translateZ(calc(var(--rel) * -320px))
-    scale(calc(1 - var(--abs-rel) * 0.04))
+    translateZ(calc(var(--abs-rel) * var(--layer-depth, 320px) * -1))
+    scale(calc(1 - var(--abs-rel) * var(--layer-shrink, 0.04)))
     translate(
       calc(var(--depth-pointer-x, 0) * 22px),
-      calc(var(--depth-pointer-y, 0) * 14px)
+      calc(var(--depth-pointer-y, 0) * 14px + var(--depth-velocity, 0) * var(--drag-shift, 0px))
     );
-  /* crossfade with a dwell plateau: full opacity while |rel| < --fade-start,
-     fading to 0 by --fade-end. Only the narrow start..end band overlaps, so
-     the focused card stays clear far longer before its neighbour appears. */
+  /* crossfade com platô: opaco enquanto |rel| < --fade-start, some até --fade-end.
+     SEM dim por velocidade — o card em foco fica 100% opaco, então o GPU oclui o que
+     está atrás (zero overdraw durante o scroll). */
   opacity: clamp(
     0,
     calc((var(--fade-end) - var(--abs-rel)) / (var(--fade-end) - var(--fade-start))),
@@ -104,23 +120,15 @@
    ================================================ */
 
 .depth-nav {
-  position: fixed;
-  top: 4rem; /* below sticky site header (h-16) */
-  right: 0;
-  bottom: 0;
-  width: 20rem;
+  flex: 0 0 auto;
+  max-height: 50%;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1.25rem;
+  padding: 1.25rem 1.2rem;
   pointer-events: auto;
-  z-index: 40;
-  /* opaque gradient instead of backdrop-filter — legible, zero per-frame cost */
-  background: linear-gradient(
-    to left,
-    rgba(7, 7, 13, 0.94) 0%,
-    rgba(7, 7, 13, 0.82) 52%,
-    rgba(7, 7, 13, 0) 100%
-  );
+  /* brutalist: hard 2px border, no radius, solid panel */
+  background: #0b0b12;
+  border: 2px solid rgba(255, 255, 255, 0.55);
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -223,6 +231,45 @@
 @media (min-width: 1280px) {
   .depth-tree-overlay {
     display: block;
+  }
+}
+
+/* Right panel — project list (top) stacked above the git graph (bottom). */
+.depth-right {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  bottom: 1rem;
+  width: clamp(19rem, 26vw, 28rem);
+  z-index: 40;
+  display: none;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .depth-right {
+    display: flex;
+  }
+}
+
+/* git graph — fills the space below the list; hidden below xl. Brutalist card. */
+.depth-vtree {
+  flex: 1 1 auto;
+  min-height: 0;
+  pointer-events: none;
+  display: none;
+  flex-direction: column;
+  background: #0b0b12;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  padding: 0.9rem 1rem;
+  overflow: hidden;
+}
+
+@media (min-width: 1280px) {
+  .depth-vtree {
+    display: flex;
   }
 }
 
